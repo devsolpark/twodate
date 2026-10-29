@@ -188,7 +188,9 @@ button{font:inherit;color:inherit;cursor:pointer;}
 .in{width:100%;font:inherit;font-size:21px;padding:6px 4px;background:transparent;color:var(--ink);border:0;border-bottom:2.5px solid var(--ink);border-radius:0;}
 .ro{margin:0;}
 .in::placeholder{color:#a8a095;}
-textarea.in{display:block;border:2.5px solid var(--ink);border-radius:var(--wob);padding:10px 12px;line-height:1.5;resize:none;background-color:#fff;}
+/* 메모 입력칸은 크기를 바꿀 수 없게 높이를 고정 (내용이 길면 칸 안에서 스크롤) */
+textarea.in{display:block;border:2.5px solid var(--ink);border-radius:var(--wob);padding:10px 12px;line-height:1.5;resize:none!important;overflow-y:auto;height:122px;min-height:122px;max-height:122px;background-color:#fff;}
+textarea.in#memo{height:154px;min-height:154px;max-height:154px;}
 .chips{display:flex;flex-wrap:wrap;gap:8px;}
 .chip{font-family:var(--f-title);font-size:16px;padding:5px 14px;background:var(--paper);border:2px solid var(--ink);border-radius:var(--wob);}
 .chip[aria-pressed="true"],.chip[aria-checked="true"]{box-shadow:2px 2px 0 var(--ink);transform:translate(-1px,-1px) rotate(-1.5deg);}
