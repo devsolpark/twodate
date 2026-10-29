@@ -728,4 +728,9 @@ function route(){
 }
 window.addEventListener('hashchange',route);
 route();
+
+/* ---------- 앱 설치·오프라인 ---------- */
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
+  window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+}
 })();

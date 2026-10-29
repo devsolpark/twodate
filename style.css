@@ -18,7 +18,7 @@
 html{scroll-padding-top:env(safe-area-inset-top,0px);}
 *,*::before,*::after{box-sizing:border-box;}
 [hidden]{display:none!important;}
-body{margin:0;background:var(--desk);color:var(--ink);font-family:var(--f-body);font-weight:700;font-size:19px;line-height:1.45;-webkit-tap-highlight-color:transparent;}
+body{margin:0;overscroll-behavior-y:none;background:var(--desk);color:var(--ink);font-family:var(--f-body);font-weight:700;font-size:19px;line-height:1.45;-webkit-tap-highlight-color:transparent;}
 a{color:inherit;text-decoration:none;}
 button{font:inherit;color:inherit;cursor:pointer;}
 :focus-visible{outline:3px dashed var(--ink);outline-offset:3px;}
