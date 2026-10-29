@@ -726,8 +726,46 @@ function route(){
   else { renderMain(); isMain=true; }
   window.scrollTo(0,isMain?state.scroll:0);
 }
-window.addEventListener('hashchange',route);
-route();
+/* ---------- 방 비밀번호 ----------
+   둘만 쓰도록 처음 한 번 비밀번호를 묻고, 맞으면 이 기기에 기억해 둠.
+   코드에는 비밀번호 대신 해시만 둠. 비밀번호를 바꾸면 기억해 둔 기기도 다시 물어봄.
+   새 해시 만들기: node -e "crypto.subtle.digest('SHA-256',new TextEncoder().encode('twodate:'+process.argv[1])).then(b=>console.log(Buffer.from(b).toString('hex')))" '새 비밀번호' */
+var ROOM_HASH='701e1cbe23ab9253b93bdb96a8ec4471bae0ff294e55d1ac18aa3f60311e74bd';
+var ROOM_KEY='couple-diary-room';
+function sha256hex(s){
+  return crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)).then(function(buf){
+    return Array.prototype.map.call(new Uint8Array(buf),function(x){ return ('0'+x.toString(16)).slice(-2); }).join('');
+  });
+}
+function unlocked(){ try{ return localStorage.getItem(ROOM_KEY)===ROOM_HASH; }catch(e){ return false; } }
+function start(){ window.addEventListener('hashchange',route); route(); }
+function renderLock(){
+  app.innerHTML=
+  '<div class="wrap lock">'+
+    '<form class="paper page lock-box" id="lockF" novalidate><div class="spiral" aria-hidden="true"></div>'+
+      '<svg class="lock-heart" aria-hidden="true"><use href="#heart"/></svg>'+
+      '<h1>우리 그림일기</h1>'+
+      '<p class="sub">둘만의 방이에요. 방 비밀번호를 입력해 주세요.</p>'+
+      '<div class="fld"><label for="roomPw">방 비밀번호</label>'+
+      '<input class="in" id="roomPw" type="password" autocomplete="current-password" autocapitalize="off" spellcheck="false"></div>'+
+      '<p class="err" id="lockErr" role="alert"></p>'+
+      '<div class="actions"><button type="submit" class="btn primary">들어가기</button></div>'+
+    '</form>'+
+  '</div>';
+  var input=$('#roomPw'); input.focus();
+  $('#lockF').addEventListener('submit',function(ev){
+    ev.preventDefault();
+    var v=input.value.trim(), err=$('#lockErr');
+    if(!v){ err.textContent='비밀번호를 입력해 주세요.'; input.focus(); return; }
+    if(!window.crypto||!crypto.subtle){ err.textContent='https 주소로 열어야 들어갈 수 있어요.'; return; }
+    sha256hex('twodate:'+v).then(function(h){
+      if(h!==ROOM_HASH){ err.textContent='비밀번호가 달라요. 다시 입력해 주세요.'; input.select(); return; }
+      try{ localStorage.setItem(ROOM_KEY,h); }catch(e){}
+      start();
+    });
+  });
+}
+if(unlocked()) start(); else renderLock();
 
 /* ---------- 앱 설치·오프라인 ---------- */
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
