@@ -124,7 +124,8 @@ function migrate(a){
 }
 function load(){
   try{ var r=localStorage.getItem(KEY); if(r){ var a=JSON.parse(r); if(Array.isArray(a)) return migrate(a); } }catch(e){}
-  var s=seed(); try{ localStorage.setItem(KEY,JSON.stringify(s)); }catch(e){}
+  /* 서버와 함께 쓸 때는 예시 일정 없이 빈 일기장으로 시작 */
+  var s=(typeof SUPABASE_URL==='string'&&SUPABASE_URL)?[]:seed(); try{ localStorage.setItem(KEY,JSON.stringify(s)); }catch(e){}
   return s;
 }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(events)); return true; }catch(e){ return false; } }
@@ -442,13 +443,14 @@ function renderDetail(id){
       e.weather=wx?wx.value:'';
       e.dayMemo=$('#dayMemo').value.trim();
       if(!save()) toast('이 기기에 저장하지 못했어요. 새로고침하면 사라질 수 있어요'); else toast('저장했어요');
+      push('save',e.id);
       renderDetail(id);
     });
   } else $('#delAsk').addEventListener('click',function(){
     $('#act').outerHTML='<div class="confirm" id="act"><p>이 일정을 정말 삭제할까요?</p><div class="actions"><button type="button" class="btn danger" id="delYes">삭제하기</button><button type="button" class="btn" id="delNo">취소</button></div></div>';
     $('#delNo').addEventListener('click',function(){ renderDetail(id); });
     $('#delYes').addEventListener('click',function(){
-      events=events.filter(function(x){ return x.id!==id; }); save();
+      events=events.filter(function(x){ return x.id!==id; }); save(); push('del',id);
       toast('삭제했어요'); location.hash='#/';
     });
     $('#delYes').focus();
@@ -611,7 +613,7 @@ function renderForm(id,presetDate){
       place:$('#place').value.trim(), memo:$('#memo').value.trim(), by:f.by
     };
     if(editing) events=events.map(function(x){ return x.id===obj.id?obj:x; }); else events.push(obj);
-    save();
+    save(); push('save',obj.id);
     if(obj.date){ var d=parse(obj.date); state.month={y:d.getFullYear(),m:d.getMonth()}; state.sel=obj.date; state.mode='cal'; }
     toast(editing?'수정했어요':'등록했어요');
     location.hash=editing?'#/event/'+obj.id:'#/';
@@ -711,6 +713,7 @@ function pickTime(cur,opener,done){
 /* ---------- router ---------- */
 function route(){
   closeModal();
+  if(ONLINE&&!roomKey()){ renderLock(); return; }
   var raw=location.hash.replace(/^#\/?/,''), parts=raw.split('?'), seg=parts[0].split('/').filter(Boolean);
   var q=new URLSearchParams(parts[1]||'');
   if($('#bookBody')) state.scroll=window.scrollY;
@@ -726,20 +729,95 @@ function route(){
   else { renderMain(); isMain=true; }
   window.scrollTo(0,isMain?state.scroll:0);
 }
-/* ---------- 방 비밀번호 ----------
-   둘만 쓰도록 처음 한 번 비밀번호를 묻고, 맞으면 이 기기에 기억해 둠.
-   코드에는 비밀번호 대신 해시만 둠. 비밀번호를 바꾸면 기억해 둔 기기도 다시 물어봄.
-   새 해시 만들기: node -e "crypto.subtle.digest('SHA-256',new TextEncoder().encode('twodate:'+process.argv[1])).then(b=>console.log(Buffer.from(b).toString('hex')))" '새 비밀번호' */
-var ROOM_HASH='ba6da0c5011a0ad5a4f82d9b9abc404eff21c94090da6beb7a69deead826f59a';
-var ROOM_KEY='couple-diary-room';
-function sha256hex(s){
-  return crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)).then(function(buf){
-    return Array.prototype.map.call(new Uint8Array(buf),function(x){ return ('0'+x.toString(16)).slice(-2); }).join('');
+/* ---------- 함께 쓰기 (Supabase) ----------
+   일정은 이 기기(localStorage)에 먼저 저장하고, 서버(Supabase)로 보내 둘이 같은 일정을 봄.
+   - 앱을 열거나 다시 화면에 띄울 때 서버의 일정 전체를 받아옴 (pull)
+   - 등록·수정·삭제는 "보낼 목록"에 쌓아 두고 차례로 보냄 (push → flush). 인터넷이 없으면 연결될 때 다시 보냄
+   - 방 비밀번호는 서버 함수가 확인함. 맞으면 이 기기에 기억해 두고 다음부터 묻지 않음
+   config.js 에 SUPABASE_URL 이 없으면(미리보기 등) 서버 없이 이 기기에서만 동작함 */
+var ONLINE=typeof SUPABASE_URL==='string'&&!!SUPABASE_URL;
+var ROOM=typeof ROOM_ID==='string'&&ROOM_ID?ROOM_ID:'twodate';
+var PASS_KEY='couple-diary-room-key', PENDING_KEY='couple-diary-pending', SYNCED_KEY='couple-diary-synced';
+function getLS(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function setLS(k,v){ try{ if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v); }catch(e){} }
+function roomKey(){ return getLS(PASS_KEY)||''; }
+function rpc(fn,args){
+  return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{
+    method:'POST',
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify(args)
+  }).then(function(r){
+    if(r.ok) return r.status===204?null:r.json();
+    return r.json().catch(function(){ return {}; }).then(function(j){ var e=new Error(j.message||('HTTP '+r.status)); e.code=j.code; throw e; });
   });
 }
-function unlocked(){ try{ return localStorage.getItem(ROOM_KEY)===ROOM_HASH; }catch(e){ return false; } }
-function start(){ window.addEventListener('hashchange',route); route(); }
-function renderLock(){
+function wrongKey(err){ return err&&err.code==='28000'; }
+function lockOut(){
+  setLS(PASS_KEY,null); closeModal();
+  renderLock('방 비밀번호가 바뀌었어요. 새 비밀번호를 입력해 주세요.');
+}
+function pending(){ try{ return JSON.parse(getLS(PENDING_KEY))||[]; }catch(e){ return []; } }
+function setPending(a){ setLS(PENDING_KEY,JSON.stringify(a)); }
+/* 바뀐 일정을 보낼 목록에 넣고 보내기. 같은 일정은 마지막 변경만 남김 */
+function push(op,id){
+  if(!ONLINE) return;
+  var a=pending().filter(function(x){ return x.id!==id; });
+  a.push({op:op,id:id,t:Date.now()+Math.random()});
+  setPending(a); flush();
+}
+var flushing=false;
+function flush(){
+  if(!ONLINE||flushing||!roomKey()) return Promise.resolve();
+  var x=pending()[0]; if(!x) return Promise.resolve();
+  var ev=events.filter(function(e){ return e.id===x.id; })[0];
+  flushing=true;
+  var call=(x.op==='del'||!ev)?rpc('delete_event',{p_room:ROOM,p_key:roomKey(),p_id:x.id})
+                              :rpc('save_event',{p_room:ROOM,p_key:roomKey(),p_event:ev});
+  return call.then(function(){
+    setPending(pending().filter(function(y){ return y.t!==x.t; }));
+    flushing=false; return flush();
+  },function(err){
+    flushing=false; if(wrongKey(err)) lockOut();
+  });
+}
+/* 서버 일정을 받아와 이 기기 일정과 합침. 아직 못 보낸 변경은 이 기기 쪽을 우선 */
+function pull(){
+  if(!ONLINE||!roomKey()) return Promise.resolve();
+  return rpc('list_events',{p_room:ROOM,p_key:roomKey()}).then(function(list){
+    var local={}; events.forEach(function(e){ local[e.id]=e; });
+    if(!getLS(SYNCED_KEY)){
+      /* 이 기기에서 처음 연결: 예시 일정(s1…)을 뺀, 이 기기에만 있던 일정을 서버로 올림 */
+      var a=pending();
+      events.forEach(function(e){ if(!/^s\d+$/.test(e.id)&&!a.some(function(x){ return x.id===e.id; })) a.push({op:'save',id:e.id,t:Date.now()+Math.random()}); });
+      setPending(a); setLS(SYNCED_KEY,'1');
+    }
+    var p=pending(), mine={}; p.forEach(function(x){ mine[x.id]=x.op; });
+    var next=(list||[]).filter(function(e){ return e&&e.id&&!mine[e.id]; });
+    Object.keys(mine).forEach(function(id){ if(mine[id]==='save'&&local[id]) next.push(local[id]); });
+    events=migrate(next); save();
+    refresh();
+    return flush();
+  },function(err){ if(wrongKey(err)) lockOut(); });
+}
+/* 받아온 일정을 화면에 반영. 입력 중인 화면(등록·수정)이나 열린 팝업은 건드리지 않음 */
+function refresh(){
+  if($('#lockF')||$('#ov')) return;
+  var raw=location.hash.replace(/^#\/?/,'');
+  if(raw===''&&$('#bookBody')){ var y=window.scrollY; renderMain(); window.scrollTo(0,y); }
+}
+
+/* ---------- 방 비밀번호 ---------- */
+var started=false;
+function start(){
+  if(!started){
+    started=true;
+    window.addEventListener('hashchange',route);
+    window.addEventListener('online',function(){ pull(); });
+    document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') pull(); });
+  }
+  route(); pull();
+}
+function renderLock(msg){
   app.innerHTML=
   '<div class="wrap lock">'+
     '<form class="paper page lock-box" id="lockF" novalidate><div class="spiral" aria-hidden="true"></div>'+
@@ -747,24 +825,26 @@ function renderLock(){
       '<h1>투데이트</h1>'+
       '<div class="fld"><label for="roomPw">방 비밀번호</label>'+
       '<input class="in" id="roomPw" type="password" autocomplete="current-password" autocapitalize="off" spellcheck="false"></div>'+
-      '<p class="err" id="lockErr" role="alert"></p>'+
-      '<div class="actions"><button type="submit" class="btn primary">들어가기</button></div>'+
+      '<p class="err" id="lockErr" role="alert">'+esc(msg||'')+'</p>'+
+      '<div class="actions"><button type="submit" class="btn primary" id="lockBtn">들어가기</button></div>'+
     '</form>'+
   '</div>';
   var input=$('#roomPw'); input.focus();
   $('#lockF').addEventListener('submit',function(ev){
     ev.preventDefault();
-    var v=input.value.trim(), err=$('#lockErr');
+    var v=input.value.trim(), err=$('#lockErr'), btn=$('#lockBtn');
     if(!v){ err.textContent='비밀번호를 입력해 주세요.'; input.focus(); return; }
-    if(!window.crypto||!crypto.subtle){ err.textContent='https 주소로 열어야 들어갈 수 있어요.'; return; }
-    sha256hex('twodate:'+v).then(function(h){
-      if(h!==ROOM_HASH){ err.textContent='비밀번호가 달라요. 다시 입력해 주세요.'; input.select(); return; }
-      try{ localStorage.setItem(ROOM_KEY,h); }catch(e){}
-      start();
+    btn.disabled=true; err.textContent='';
+    rpc('check_room',{p_room:ROOM,p_key:v}).then(function(ok){
+      btn.disabled=false;
+      if(ok!==true){ err.textContent='비밀번호가 달라요. 다시 입력해 주세요.'; input.select(); return; }
+      setLS(PASS_KEY,v); start();
+    },function(){
+      btn.disabled=false; err.textContent='연결하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.';
     });
   });
 }
-if(unlocked()) start(); else renderLock();
+if(!ONLINE||roomKey()) start(); else renderLock();
 
 /* ---------- 앱 설치·오프라인 ---------- */
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
