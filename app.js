@@ -257,7 +257,7 @@ function dayPanel(){
   var head='<h3>'+(d.getMonth()+1)+'월 '+d.getDate()+'일 ('+DOW[d.getDay()]+')</h3>';
   var evs=events.filter(function(e){ return e.date===state.sel; }).sort(function(a,b){ return (a.time||'')<(b.time||'')?-1:1; });
   if(!evs.length){
-    return head+'<p class="hint">이 날은 아직 비어 있어요.</p>'+(state.sel<todayStr()?'':'<p style="margin:10px 0 0"><a class="btn" href="#/new?date='+state.sel+'">이 날에 일정 등록하기</a></p>');
+    return head+'<p class="hint">이 날은 아직 비어 있어요.</p>'+'<p style="margin:10px 0 0"><a class="btn" href="#/new?date='+state.sel+'">이 날에 일정 등록하기</a></p>';
   }
   return head+evs.map(function(e){
     return '<a class="mini" href="#/event/'+esc(e.id)+'">'+badge(e)+'<span class="tt">'+esc(e.title)+'</span><span class="tm">'+(e.time?esc(fmtTime(e.time)):'')+'</span></a>';
@@ -511,7 +511,7 @@ function renderForm(id,presetDate){
   if(editing&&editing.date&&editing.date<todayStr()){ location.hash='#/event/'+editing.id; return; }
   var curSeason=seasonOf(new Date().getMonth()+1);
   var f=editing?{title:editing.title,cat:CATS[editing.cat]?editing.cat:'date',sub:editing.sub||'',sub2:editing.sub2||'',mode:editing.date?'date':'season',date:editing.date||'',time:editing.time||'',season:editing.season||curSeason,place:editing.place||'',memo:editing.memo||'',by:editing.by||'me',link:editing.link||''}
-               :{title:'',cat:'date',sub:'',sub2:'',mode:'date',date:/^\d{4}-\d{2}-\d{2}$/.test(presetDate||'')&&presetDate>=todayStr()?presetDate:todayStr(),time:nowHM(),season:curSeason,place:'',memo:'',by:'me',link:''};
+               :{title:'',cat:'date',sub:'',sub2:'',mode:'date',date:/^\d{4}-\d{2}-\d{2}$/.test(presetDate||'')?presetDate:todayStr(),time:nowHM(),season:curSeason,place:'',memo:'',by:'me',link:''};
   var pi=editing&&editing.placeInfo?JSON.parse(JSON.stringify(editing.placeInfo)):emptyPlace();
   var catChips=Object.keys(CATS).map(function(k){
     var c=CATS[k];
@@ -614,7 +614,7 @@ function renderForm(id,presetDate){
     $('#dateBtn').innerHTML=(f.date?esc(fmtDate(f.date)):'<span class="ph">날짜 선택</span>')+'<span aria-hidden="true">📅</span>';
     $('#timeBtn').innerHTML=(f.time?esc(fmtTime(f.time)):'<span class="ph">시간 선택</span>')+'<span aria-hidden="true">🕒</span>';
   }
-  $('#dateBtn').addEventListener('click',function(){ pickDate(f.date,this,function(v){ f.date=v; syncPick(); },todayStr()); });
+  $('#dateBtn').addEventListener('click',function(){ pickDate(f.date,this,function(v){ f.date=v; syncPick(); }); });
   $('#timeBtn').addEventListener('click',function(){ pickTime(f.time,this,function(v){ f.time=v; syncPick(); }); });
 
   /* 가게 정보: 수정 화면에서 링크가 있을 때만 */
@@ -639,7 +639,6 @@ function renderForm(id,presetDate){
     var title=$('#title').value.trim(), date=f.date, time=f.time, err=$('#err');
     if(!title){ err.textContent='제목을 입력해 주세요.'; $('#title').focus(); return; }
     if(f.mode==='date'&&!date){ err.textContent='날짜를 선택해 주세요. 아직 정하지 않았다면 "아직 몰라요"를 눌러 주세요.'; $('#dateBtn').focus(); return; }
-    if(f.mode==='date'&&date<todayStr()){ err.textContent='지난 날짜로는 등록할 수 없어요. 오늘이나 이후 날짜를 골라 주세요.'; $('#dateBtn').focus(); return; }
     var link=$('#link').value.trim();
     if(link){
       if(!/^[a-z][a-z0-9+.-]*:/i.test(link)) link='https://'+link;

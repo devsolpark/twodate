@@ -1,6 +1,6 @@
 /* 오프라인에서도 열리도록 앱 파일을 저장해 둠.
    온라인이면 항상 새 파일을 받아오고(그래서 수정 사항이 바로 반영됨), 연결이 없을 때만 저장본을 씀. */
-var CACHE='twodate-v6';
+var CACHE='twodate-v7';
 var SHELL=['./','./index.html','./style.css','./config.js','./app.js','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
 
 self.addEventListener('install',function(e){
