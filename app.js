@@ -748,7 +748,7 @@ function rpc(fn,args){
     body:JSON.stringify(args)
   }).then(function(r){
     if(r.ok) return r.status===204?null:r.json();
-    return r.json().catch(function(){ return {}; }).then(function(j){ var e=new Error(j.message||('HTTP '+r.status)); e.code=j.code; throw e; });
+    return r.json().catch(function(){ return {}; }).then(function(j){ var e=new Error(j.message||('HTTP '+r.status)); e.code=j.code; e.status=r.status; throw e; });
   });
 }
 function wrongKey(err){ return err&&err.code==='28000'; }
@@ -839,8 +839,12 @@ function renderLock(msg){
       btn.disabled=false;
       if(ok!==true){ err.textContent='비밀번호가 달라요. 다시 입력해 주세요.'; input.select(); return; }
       setLS(PASS_KEY,v); start();
-    },function(){
-      btn.disabled=false; err.textContent='연결하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.';
+    },function(e){
+      btn.disabled=false;
+      /* 서버가 오류로 답했으면 그 내용을, 아예 닿지 못했으면 연결 안내를 보여줌 */
+      err.textContent=e&&e.status?'서버가 요청을 받지 않았어요 ('+e.status+(e.code?' · '+e.code:'')+'): '+e.message
+                                   :'서버에 연결하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.';
+      console.error('twodate_check_room',e);
     });
   });
 }
