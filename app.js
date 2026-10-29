@@ -416,6 +416,7 @@ function renderDetail(id){
   var noteBy=getLS(ME_KEY)||'me';
   /* 팝업이 열린 동안 서버에서 일정을 새로 받아오면 events 안의 객체가 바뀌므로, 저장할 때는 항상 최신 객체를 씀 */
   var current=function(){ return events.filter(function(x){ return x.id===id; })[0]||e; };
+  var newNote=function(t){ return {id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),by:noteBy,text:t,at:new Date().toISOString()}; };
   if(past){
     diary='<div class="diary-in">'+
       '<div class="fld"><span class="lb" id="lbWx">날씨</span><div class="wxs" role="radiogroup" aria-labelledby="lbWx">'+
@@ -463,7 +464,7 @@ function renderDetail(id){
       e=current();
       var t=$('#noteIn').value.trim();
       if(!t){ toast('메모를 입력해 주세요'); $('#noteIn').focus(); return; }
-      e.dayNotes=notesOf(e).concat({id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),by:noteBy,text:t,at:new Date().toISOString()});
+      e.dayNotes=notesOf(e).concat(newNote(t));
       delete e.dayMemo;
       save(); push('save',e.id);
       $('#notesList').innerHTML=notesHTML(e); $('#noteIn').value='';
@@ -489,9 +490,12 @@ function renderDetail(id){
       var wx=document.querySelector('input[name="wx"]:checked');
       if(curImg) e.image=curImg; else delete e.image;
       e.weather=wx?wx.value:'';
-      if(!save()) toast('이 기기에 저장하지 못했어요. 새로고침하면 사라질 수 있어요'); else toast('저장했어요');
-      push('save',e.id);
-      renderDetail(id);
+      /* 메모 칸에 써 두고 '메모 남기기'를 안 눌렀어도 함께 저장 */
+      var t=$('#noteIn').value.trim();
+      if(t){ e.dayNotes=notesOf(e).concat(newNote(t)); delete e.dayMemo; }
+      var ok=save(); push('save',e.id);
+      location.hash='#/';
+      toast(ok?'저장했어요':'이 기기에 저장하지 못했어요. 새로고침하면 사라질 수 있어요');
     });
   } else $('#delAsk').addEventListener('click',function(){
     $('#act').outerHTML='<div class="confirm" id="act"><p>이 일정을 정말 삭제할까요?</p><div class="actions"><button type="button" class="btn danger" id="delYes">삭제하기</button><button type="button" class="btn" id="delNo">취소</button></div></div>';

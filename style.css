@@ -225,6 +225,6 @@ textarea.in{display:block;border:2.5px solid var(--ink);border-radius:var(--wob)
 .lock-box{text-align:center;}
 .lock-box .fld{text-align:left;}
 .lock-heart{display:block;width:64px;height:60px;margin:0 auto 10px;transform:rotate(-10deg);--ft-fill:var(--pink);--ft-stroke:var(--ink);}
-#toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;z-index:10;background:#2A2724;color:#fff;font-family:var(--f-title);font-size:17px;padding:9px 20px;border-radius:var(--wob);transition:opacity .25s,transform .25s;white-space:nowrap;}
+#toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;z-index:30;background:#2A2724;color:#fff;font-family:var(--f-title);font-size:17px;padding:9px 20px;border-radius:var(--wob);transition:opacity .25s,transform .25s;white-space:nowrap;}
 #toast.show{opacity:1;transform:translateX(-50%);}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important;}}
