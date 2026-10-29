@@ -730,7 +730,7 @@ function route(){
    둘만 쓰도록 처음 한 번 비밀번호를 묻고, 맞으면 이 기기에 기억해 둠.
    코드에는 비밀번호 대신 해시만 둠. 비밀번호를 바꾸면 기억해 둔 기기도 다시 물어봄.
    새 해시 만들기: node -e "crypto.subtle.digest('SHA-256',new TextEncoder().encode('twodate:'+process.argv[1])).then(b=>console.log(Buffer.from(b).toString('hex')))" '새 비밀번호' */
-var ROOM_HASH='701e1cbe23ab9253b93bdb96a8ec4471bae0ff294e55d1ac18aa3f60311e74bd';
+var ROOM_HASH='b0eab2ad7cc1f403db36e77cb16cdcde9876cee3643577bf7bea8ed7aefe0037';
 var ROOM_KEY='couple-diary-room';
 function sha256hex(s){
   return crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)).then(function(buf){
@@ -744,8 +744,7 @@ function renderLock(){
   '<div class="wrap lock">'+
     '<form class="paper page lock-box" id="lockF" novalidate><div class="spiral" aria-hidden="true"></div>'+
       '<svg class="lock-heart" aria-hidden="true"><use href="#heart"/></svg>'+
-      '<h1>우리 그림일기</h1>'+
-      '<p class="sub">둘만의 방이에요. 방 비밀번호를 입력해 주세요.</p>'+
+      '<h1>투데이트</h1>'+
       '<div class="fld"><label for="roomPw">방 비밀번호</label>'+
       '<input class="in" id="roomPw" type="password" autocomplete="current-password" autocapitalize="off" spellcheck="false"></div>'+
       '<p class="err" id="lockErr" role="alert"></p>'+
