@@ -109,6 +109,9 @@ grant execute on function public.twodate_list_events(text, text)           to an
 grant execute on function public.twodate_save_event(text, text, jsonb)     to anon, authenticated;
 grant execute on function public.twodate_delete_event(text, text, text)    to anon, authenticated;
 
+-- Supabase API(PostgREST)가 새 함수를 바로 알도록 목록 새로고침
+notify pgrst, 'reload schema';
+
 -- 방 만들기 / 비밀번호 바꾸기
 -- 아래 줄의 '여기에-방-비밀번호' 를 실제 비밀번호로 바꿔서 이 한 줄만 따로 실행. (비밀번호는 이 파일에 저장하지 말 것)
 -- 방 이름 'twodate' 는 config.js 의 ROOM_ID 와 같아야 함.
