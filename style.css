@@ -130,6 +130,12 @@ button{font:inherit;color:inherit;cursor:pointer;}
 .wx b{font-family:var(--f-title);font-weight:400;font-size:13px;}
 .wx input:checked+span{background:#FFE3EA;border-color:var(--ink);box-shadow:2px 2px 0 var(--ink);transform:rotate(-2deg);}
 .wx input:focus-visible+span{outline:3px dashed var(--ink);outline-offset:2px;}
+.notes{list-style:none;margin:0;padding:0;display:grid;gap:8px;}
+.note{padding:8px 12px 6px;background:#fff;border:2px solid var(--ink);border-radius:var(--wob);}
+.note p{margin:0;font-size:18px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;}
+.note-by{display:block;text-align:right;color:var(--ink-soft);font-size:15px;}
+.note-add{display:grid;gap:8px;margin-top:12px;}
+.note-add .btn{justify-self:end;padding:6px 16px;font-size:16px;}
 .lined{background-image:repeating-linear-gradient(transparent 0 37px,var(--line) 37px 39px);background-position:0 4px;padding-top:6px;}
 .lined .rowb{min-height:39px;display:flex;align-items:center;}
 .lined .ttl{margin:0;font-family:var(--f-body);font-weight:700;font-size:21px;line-height:39px;word-break:keep-all;overflow-wrap:anywhere;}

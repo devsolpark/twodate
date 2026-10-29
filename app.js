@@ -366,6 +366,31 @@ function placeCardHTML(e){
   '</section>';
 }
 
+/* ---------- 지난 일정 메모 ----------
+   메모는 여러 개를 쌓아 둠: dayNotes = [{id, by, text, at}]. 예전 한 칸짜리 메모(dayMemo)는 첫 메모로 보여줌 */
+var ME_KEY='couple-diary-me';
+function notesOf(e){
+  var a=Array.isArray(e.dayNotes)?e.dayNotes.slice():[];
+  if(e.dayMemo&&!a.some(function(n){ return n.id==='legacy'; })) a.unshift({id:'legacy',by:e.by||'me',text:e.dayMemo,at:''});
+  return a.sort(function(x,y){ return (x.at||'')<(y.at||'')?-1:(x.at||'')>(y.at||'')?1:0; });
+}
+function mergeNotes(a,b){
+  var seen={}, out=[];
+  (a||[]).concat(b||[]).forEach(function(n){ if(n&&n.id&&!seen[n.id]){ seen[n.id]=1; out.push(n); } });
+  return out;
+}
+function noteTime(iso){
+  if(!iso) return '';
+  var d=new Date(iso); return (d.getMonth()+1)+'/'+d.getDate()+' '+fmtTime(pad(d.getHours())+':'+pad(d.getMinutes()));
+}
+function notesHTML(e){
+  var a=notesOf(e);
+  if(!a.length) return '<p class="hint">아직 남긴 메모가 없어요.</p>';
+  return '<ul class="notes">'+a.map(function(n){
+    return '<li class="note"><p>'+esc(n.text)+'</p><span class="note-by">'+esc(WHO[n.by]||WHO.me)+(n.at?' · '+esc(noteTime(n.at)):'')+'</span></li>';
+  }).join('')+'</ul>';
+}
+
 /* ---------- detail ---------- */
 function renderDetail(id){
   var fresh=!($('#ov')&&$('#ov').dataset.kind==='detail');
@@ -388,12 +413,20 @@ function renderDetail(id){
   }
   var frame=past?'<div id="photoArea">'+photoHTML()+'</div>':'';
   var diary='';
+  var noteBy=getLS(ME_KEY)||'me';
+  /* 팝업이 열린 동안 서버에서 일정을 새로 받아오면 events 안의 객체가 바뀌므로, 저장할 때는 항상 최신 객체를 씀 */
+  var current=function(){ return events.filter(function(x){ return x.id===id; })[0]||e; };
   if(past){
     diary='<div class="diary-in">'+
       '<div class="fld"><span class="lb" id="lbWx">날씨</span><div class="wxs" role="radiogroup" aria-labelledby="lbWx">'+
       WEATHER.map(function(w){ return '<label class="wx"><input type="radio" name="wx" value="'+w.k+'"'+(e.weather===w.k?' checked':'')+'><span><i aria-hidden="true">'+wxIcon(w.k)+'</i><b>'+w.n+'</b></span></label>'; }).join('')+
       '</div></div>'+
-      '<div class="fld"><label for="dayMemo">메모</label><textarea class="in" id="dayMemo" rows="4" maxlength="300" placeholder="그날은 어땠나요? 남기고 싶은 이야기를 적어 보세요"></textarea></div>'+
+      '<div class="fld"><span class="lb">메모</span><div id="notesList">'+notesHTML(e)+'</div>'+
+        '<div class="note-add">'+
+          '<div class="chips" role="radiogroup" aria-label="누가 남겨요?" id="gNoteBy">'+Object.keys(WHO).map(function(k){ return '<button type="button" class="chip" role="radio" data-tone data-noteby="'+k+'" style="--tone:var(--mint)" aria-checked="'+(noteBy===k)+'">'+WHO[k]+'</button>'; }).join('')+'</div>'+
+          '<textarea class="in" id="noteIn" rows="3" maxlength="300" aria-label="새 메모" placeholder="그날은 어땠나요? 남기고 싶은 이야기를 적어 보세요"></textarea>'+
+          '<button type="button" class="btn" id="noteAdd">메모 남기기</button>'+
+        '</div></div>'+
     '</div>';
   }
   var dl;
@@ -421,7 +454,21 @@ function renderDetail(id){
   $('#dClose').addEventListener('click',function(){ location.hash='#/'; });
   if(fresh) $('#dClose').focus();
   if(past){
-    $('#dayMemo').value=e.dayMemo||'';
+    $('#gNoteBy').addEventListener('click',function(ev){
+      var b=ev.target.closest('[data-noteby]'); if(!b) return;
+      noteBy=b.getAttribute('data-noteby'); setLS(ME_KEY,noteBy);
+      this.querySelectorAll('[data-noteby]').forEach(function(x){ x.setAttribute('aria-checked',String(x===b)); });
+    });
+    $('#noteAdd').addEventListener('click',function(){
+      e=current();
+      var t=$('#noteIn').value.trim();
+      if(!t){ toast('메모를 입력해 주세요'); $('#noteIn').focus(); return; }
+      e.dayNotes=notesOf(e).concat({id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),by:noteBy,text:t,at:new Date().toISOString()});
+      delete e.dayMemo;
+      save(); push('save',e.id);
+      $('#notesList').innerHTML=notesHTML(e); $('#noteIn').value='';
+      toast('메모를 남겼어요');
+    });
     var bindPhoto=function(){
       var area=$('#photoArea');
       $('#photoBtn').addEventListener('click',function(){ $('#photoIn').click(); });
@@ -438,10 +485,10 @@ function renderDetail(id){
     };
     bindPhoto();
     $('#saveBtn').addEventListener('click',function(){
+      e=current();
       var wx=document.querySelector('input[name="wx"]:checked');
       if(curImg) e.image=curImg; else delete e.image;
       e.weather=wx?wx.value:'';
-      e.dayMemo=$('#dayMemo').value.trim();
       if(!save()) toast('이 기기에 저장하지 못했어요. 새로고침하면 사라질 수 있어요'); else toast('저장했어요');
       push('save',e.id);
       renderDetail(id);
@@ -607,7 +654,7 @@ function renderForm(id,presetDate){
     }
     var obj={
       id:editing?editing.id:'e'+Date.now().toString(36),
-      title:title,cat:f.cat,sub:f.sub,sub2:f.sub2,image:editing&&editing.image?editing.image:'',weather:editing&&editing.weather?editing.weather:'',dayMemo:editing&&editing.dayMemo?editing.dayMemo:'',link:link,placeInfo:placeInfo,
+      title:title,cat:f.cat,sub:f.sub,sub2:f.sub2,image:editing&&editing.image?editing.image:'',weather:editing&&editing.weather?editing.weather:'',dayMemo:editing&&editing.dayMemo?editing.dayMemo:'',dayNotes:editing&&editing.dayNotes?editing.dayNotes:[],link:link,placeInfo:placeInfo,
       date:f.mode==='date'?date:'', time:f.mode==='date'?time:'',
       season:f.mode==='season'?f.season:'',
       place:$('#place').value.trim(), memo:$('#memo').value.trim(), by:f.by
@@ -793,7 +840,12 @@ function pull(){
     }
     var p=pending(), mine={}; p.forEach(function(x){ mine[x.id]=x.op; });
     var next=(list||[]).filter(function(e){ return e&&e.id&&!mine[e.id]; });
-    Object.keys(mine).forEach(function(id){ if(mine[id]==='save'&&local[id]) next.push(local[id]); });
+    var srv={}; (list||[]).forEach(function(e){ if(e&&e.id) srv[e.id]=e; });
+    Object.keys(mine).forEach(function(id){
+      if(mine[id]!=='save'||!local[id]) return;
+      if(srv[id]) local[id].dayNotes=mergeNotes(local[id].dayNotes,srv[id].dayNotes);
+      next.push(local[id]);
+    });
     events=migrate(next); save();
     refresh();
     return flush();
@@ -801,6 +853,8 @@ function pull(){
 }
 /* 받아온 일정을 화면에 반영. 입력 중인 화면(등록·수정)이나 열린 팝업은 건드리지 않음 */
 function refresh(){
+  var nl=$('#notesList'), m=location.hash.match(/^#\/event\/(.+)$/);
+  if(nl&&m){ var ev=events.filter(function(x){ return x.id===decodeURIComponent(m[1]); })[0]; if(ev) nl.innerHTML=notesHTML(ev); }
   if($('#lockF')||$('#ov')) return;
   var raw=location.hash.replace(/^#\/?/,'');
   if(raw===''&&$('#bookBody')){ var y=window.scrollY; renderMain(); window.scrollTo(0,y); }
