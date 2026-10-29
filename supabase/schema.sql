@@ -80,7 +80,8 @@ begin
   if coalesce(p_event->>'id', '') = '' then
     raise exception '일정 id가 없어요' using errcode = '22023';
   end if;
-  -- 둘이 거의 동시에 저장해도 상대가 남긴 메모(dayNotes)가 사라지지 않도록, 저장된 메모와 새 메모를 id 기준으로 합침
+  -- 둘이 거의 동시에 저장해도 상대가 남긴 메모(dayNotes)가 사라지지 않도록, 저장된 메모와 새 메모를 id 기준으로 합침.
+  -- 같은 메모가 양쪽에 있으면 마지막으로 고치거나 지운 시각(u, 없으면 처음 남긴 시각 at)이 늦은 쪽을 남김
   insert into twodate_events (room, id, data) values (p_room, p_event->>'id', p_event)
   on conflict (room, id) do update
     set data = excluded.data || jsonb_build_object('dayNotes', (
@@ -88,7 +89,7 @@ begin
           from (select distinct on (t.n->>'id') t.n
                 from jsonb_array_elements(coalesce(twodate_events.data->'dayNotes', '[]'::jsonb)
                                           || coalesce(excluded.data->'dayNotes', '[]'::jsonb)) as t(n)
-                order by t.n->>'id') s)),
+                order by t.n->>'id', coalesce(t.n->>'u', t.n->>'at', '') desc) s)),
         updated_at = now();
 end;
 $$;

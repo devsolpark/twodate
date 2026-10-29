@@ -367,27 +367,36 @@ function placeCardHTML(e){
 }
 
 /* ---------- 지난 일정 메모 ----------
-   메모는 여러 개를 쌓아 둠: dayNotes = [{id, by, text, at}]. 예전 한 칸짜리 메모(dayMemo)는 첫 메모로 보여줌 */
+   메모는 여러 개를 쌓아 둠: dayNotes = [{id, by, text, at, u, deleted}]
+   at: 처음 남긴 시각, u: 마지막으로 고치거나 지운 시각. 같은 메모가 두 기기에서 다르면 u가 늦은 쪽을 씀.
+   지운 메모는 deleted 표시만 남겨 두어 다른 기기에서도 지워지게 함. 예전 한 칸짜리 메모(dayMemo)는 첫 메모로 보여줌 */
 var ME_KEY='couple-diary-me';
 function notesOf(e){
   var a=Array.isArray(e.dayNotes)?e.dayNotes.slice():[];
   if(e.dayMemo&&!a.some(function(n){ return n.id==='legacy'; })) a.unshift({id:'legacy',by:e.by||'me',text:e.dayMemo,at:''});
   return a.sort(function(x,y){ return (x.at||'')<(y.at||'')?-1:(x.at||'')>(y.at||'')?1:0; });
 }
+function noteStamp(n){ return n.u||n.at||''; }
 function mergeNotes(a,b){
-  var seen={}, out=[];
-  (a||[]).concat(b||[]).forEach(function(n){ if(n&&n.id&&!seen[n.id]){ seen[n.id]=1; out.push(n); } });
-  return out;
+  var best={}, order=[];
+  (a||[]).concat(b||[]).forEach(function(n){
+    if(!n||!n.id) return;
+    if(!best[n.id]){ order.push(n.id); best[n.id]=n; }
+    else if(noteStamp(n)>noteStamp(best[n.id])) best[n.id]=n;
+  });
+  return order.map(function(id){ return best[id]; });
 }
 function noteTime(iso){
   if(!iso) return '';
   var d=new Date(iso); return (d.getMonth()+1)+'/'+d.getDate()+' '+fmtTime(pad(d.getHours())+':'+pad(d.getMinutes()));
 }
 function notesHTML(e){
-  var a=notesOf(e);
+  var a=notesOf(e).filter(function(n){ return !n.deleted; });
   if(!a.length) return '<p class="hint">아직 남긴 메모가 없어요.</p>';
   return '<ul class="notes">'+a.map(function(n){
-    return '<li class="note"><p>'+esc(n.text)+'</p><span class="note-by">'+esc(WHO[n.by]||WHO.me)+(n.at?' · '+esc(noteTime(n.at)):'')+'</span></li>';
+    return '<li class="note" data-note="'+esc(n.id)+'"><p>'+esc(n.text)+'</p>'+
+      '<div class="note-foot"><span class="note-acts"><button type="button" class="note-btn" data-act="edit">수정</button><button type="button" class="note-btn" data-act="del">삭제</button></span>'+
+      '<span class="note-by">'+esc(WHO[n.by]||WHO.me)+(n.at?' · '+esc(noteTime(n.at)):'')+(n.u?' · 고침':'')+'</span></div></li>';
   }).join('')+'</ul>';
 }
 
@@ -459,6 +468,36 @@ function renderDetail(id){
       var b=ev.target.closest('[data-noteby]'); if(!b) return;
       noteBy=b.getAttribute('data-noteby'); setLS(ME_KEY,noteBy);
       this.querySelectorAll('[data-noteby]').forEach(function(x){ x.setAttribute('aria-checked',String(x===b)); });
+    });
+    $('#notesList').addEventListener('click',function(ev){
+      var btn=ev.target.closest('[data-act]'); if(!btn) return;
+      var li=btn.closest('[data-note]'); if(!li) return;
+      var nid=li.getAttribute('data-note'), act=btn.getAttribute('data-act');
+      e=current();
+      var all=notesOf(e), n=all.filter(function(x){ return x.id===nid; })[0]; if(!n) return;
+      if(act==='edit'){
+        li.innerHTML='<textarea class="in note-edit" rows="3" maxlength="300" aria-label="메모 고치기"></textarea>'+
+          '<div class="note-row"><button type="button" class="btn" data-act="cancel">취소</button><button type="button" class="btn primary" data-act="saveEdit">고치기</button></div>';
+        var ta=li.querySelector('textarea'); ta.value=n.text; ta.focus(); return;
+      }
+      if(act==='del'){
+        li.classList.add('note-ask');
+        li.innerHTML='<p>이 메모를 지울까요?</p><div class="note-row"><button type="button" class="btn" data-act="cancel">취소</button><button type="button" class="btn danger" data-act="delYes">지우기</button></div>';
+        li.querySelector('[data-act="delYes"]').focus(); return;
+      }
+      if(act==='cancel'){ $('#notesList').innerHTML=notesHTML(e); return; }
+      var now=new Date().toISOString(), next;
+      if(act==='saveEdit'){
+        var t=li.querySelector('textarea').value.trim();
+        if(!t){ toast('메모를 입력해 주세요'); li.querySelector('textarea').focus(); return; }
+        next={id:n.id,by:n.by,text:t,at:n.at,u:now};
+      } else if(act==='delYes'){
+        next={id:n.id,by:n.by,text:'',at:n.at,u:now,deleted:true};
+      } else return;
+      e.dayNotes=all.map(function(x){ return x.id===nid?next:x; }); delete e.dayMemo;
+      save(); push('save',e.id);
+      $('#notesList').innerHTML=notesHTML(e);
+      toast(act==='delYes'?'메모를 지웠어요':'메모를 고쳤어요');
     });
     $('#noteAdd').addEventListener('click',function(){
       e=current();
@@ -857,7 +896,7 @@ function pull(){
 /* 받아온 일정을 화면에 반영. 입력 중인 화면(등록·수정)이나 열린 팝업은 건드리지 않음 */
 function refresh(){
   var nl=$('#notesList'), m=location.hash.match(/^#\/event\/(.+)$/);
-  if(nl&&m){ var ev=events.filter(function(x){ return x.id===decodeURIComponent(m[1]); })[0]; if(ev) nl.innerHTML=notesHTML(ev); }
+  if(nl&&m&&!nl.querySelector('.note-edit,.note-ask')){ var ev=events.filter(function(x){ return x.id===decodeURIComponent(m[1]); })[0]; if(ev) nl.innerHTML=notesHTML(ev); }
   if($('#lockF')||$('#ov')) return;
   var raw=location.hash.replace(/^#\/?/,'');
   if(raw===''&&$('#bookBody')){ var y=window.scrollY; renderMain(); window.scrollTo(0,y); }
