@@ -771,8 +771,8 @@ function flush(){
   var x=pending()[0]; if(!x) return Promise.resolve();
   var ev=events.filter(function(e){ return e.id===x.id; })[0];
   flushing=true;
-  var call=(x.op==='del'||!ev)?rpc('delete_event',{p_room:ROOM,p_key:roomKey(),p_id:x.id})
-                              :rpc('save_event',{p_room:ROOM,p_key:roomKey(),p_event:ev});
+  var call=(x.op==='del'||!ev)?rpc('twodate_delete_event',{p_room:ROOM,p_key:roomKey(),p_id:x.id})
+                              :rpc('twodate_save_event',{p_room:ROOM,p_key:roomKey(),p_event:ev});
   return call.then(function(){
     setPending(pending().filter(function(y){ return y.t!==x.t; }));
     flushing=false; return flush();
@@ -783,7 +783,7 @@ function flush(){
 /* 서버 일정을 받아와 이 기기 일정과 합침. 아직 못 보낸 변경은 이 기기 쪽을 우선 */
 function pull(){
   if(!ONLINE||!roomKey()) return Promise.resolve();
-  return rpc('list_events',{p_room:ROOM,p_key:roomKey()}).then(function(list){
+  return rpc('twodate_list_events',{p_room:ROOM,p_key:roomKey()}).then(function(list){
     var local={}; events.forEach(function(e){ local[e.id]=e; });
     if(!getLS(SYNCED_KEY)){
       /* 이 기기에서 처음 연결: 예시 일정(s1…)을 뺀, 이 기기에만 있던 일정을 서버로 올림 */
@@ -835,7 +835,7 @@ function renderLock(msg){
     var v=input.value.trim(), err=$('#lockErr'), btn=$('#lockBtn');
     if(!v){ err.textContent='비밀번호를 입력해 주세요.'; input.focus(); return; }
     btn.disabled=true; err.textContent='';
-    rpc('check_room',{p_room:ROOM,p_key:v}).then(function(ok){
+    rpc('twodate_check_room',{p_room:ROOM,p_key:v}).then(function(ok){
       btn.disabled=false;
       if(ok!==true){ err.textContent='비밀번호가 달라요. 다시 입력해 주세요.'; input.select(); return; }
       setLS(PASS_KEY,v); start();
