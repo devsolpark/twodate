@@ -13,17 +13,30 @@ var addDays = function(n){ var d=new Date(); d.setDate(d.getDate()+n); return ym
 var esc = function(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
 var seasonOf = function(m){ return (m>=3&&m<=5)?'봄':(m>=6&&m<=8)?'여름':(m>=9&&m<=11)?'가을':'겨울'; };
 
+/* 카테고리 → 하위 카테고리(subs) → 세부 항목(opts). 하위와 세부는 선택하지 않아도 됨 */
 var CATS = {
-  date:{name:'데이트',emoji:'💗',color:'var(--pink)'},
-  trip:{name:'여행',emoji:'✈️',color:'var(--sky)'},
-  anniv:{name:'기념일',emoji:'🎂',color:'var(--yellow)'},
-  food:{name:'맛집',emoji:'🍜',color:'var(--orange)'},
-  meet:{name:'약속',emoji:'🤝',color:'var(--mint)'},
-  etc:{name:'기타',emoji:'✏️',color:'var(--lav)'}
+  date:{name:'데이트',emoji:'💗',color:'var(--pink)',subs:{
+    home:{name:'집',emoji:'🏠',color:'#FCE7EF',opts:['OTT','요리']},
+    food:{name:'냠',emoji:'🍜',color:'#FCE9D9',opts:['브런치','한식','양식','중식','일식','동남아','디저트']},
+    walk:{name:'뚜벅',emoji:'👟',color:'#E2F4E6',opts:['공원','야경','한강','피크닉','캠핑','여행']},
+    study:{name:'공부',emoji:'📚',color:'#E2EDFF',opts:[]},
+    sport:{name:'운동',emoji:'🏃',color:'#EAF2D3',opts:[]},
+    etc:{name:'활동',emoji:'✨',color:'#FFF0CC',opts:['전시','영화','쇼핑','스키장','놀이동산','방탈출','공방']}
+  }},
+  personal:{name:'개인',emoji:'🗂️',color:'var(--lav)',subs:{
+    work:{name:'출장',emoji:'🧳',color:'#ECE6FA',opts:[]},
+    meet:{name:'약속',emoji:'🤝',color:'#DDF3EC',opts:[]},
+    dinner:{name:'회식',emoji:'🍻',color:'#FDE4D6',opts:[]}
+  }}
 };
-var SEASONS = {'봄':'🌸','여름':'🌊','가을':'🍂','겨울':'⛄'};
-var SEASON_COLOR = {'봄':'var(--pink)','여름':'var(--sky)','가을':'var(--orange)','겨울':'var(--lav)'};
+function catOf(e){
+  var c=CATS[e.cat]||CATS.date, s=e.sub&&c.subs[e.sub];
+  return {emoji:(s||c).emoji,color:(s||c).color,label:s?s.name+(e.sub2?' · '+e.sub2:''):c.name};
+}
+var SEASONS = {'봄':'🌸','여름':'🌊','가을':'🍂','겨울':'⛄','언젠가':'✨'};
+var SEASON_COLOR = {'봄':'var(--pink)','여름':'var(--sky)','가을':'var(--orange)','겨울':'var(--lav)','언젠가':'var(--yellow)'};
 var SEASON_ORDER = ['봄','여름','가을','겨울'];
+var SEASON_CHOICES = SEASON_ORDER.concat('언젠가');
 var DOW = ['일','월','화','수','목','금','토'];
 var WEATHER=[{k:'sun',i:'☀️',n:'맑음'},{k:'part',i:'⛅',n:'구름'},{k:'cloud',i:'☁️',n:'흐림'},{k:'rain',i:'🌧️',n:'비'},{k:'snow',i:'❄️',n:'눈'},{k:'wind',i:'🌬️',n:'바람'}];
 /* cute round weather icons (crayon outline + pastel fill) */
@@ -78,27 +91,39 @@ function whenText(e){
 var KEY = 'couple-diary-v1';
 function seed(){
   return [
-    {id:'s1',title:'성수동 카페 투어',cat:'food',date:addDays(-3),time:'15:00',season:'',place:'성수동 연무장길',memo:'치즈케이크가 제일 맛있었어. 다음엔 다른 집도!',by:'me'},
-    {id:'s2',title:'첫 영화 보러 가기',cat:'date',date:addDays(-8),time:'19:30',season:'',place:'용산 CGV',memo:'팝콘은 반반으로.',by:'partner'},
-    {id:'s3',title:'한강 피크닉',cat:'date',date:addDays(-15),time:'',season:'',place:'뚝섬 한강공원',memo:'돗자리 챙겨오기',by:'me'},
-    {id:'s4',title:'퇴근하고 야식 먹기',cat:'food',date:addDays(0),time:'21:00',season:'',place:'우리 동네 포장마차',memo:'오뎅탕이랑 계란말이 시키기',by:'partner'},
-    {id:'s5',title:'도자기 공방 원데이 클래스',cat:'date',date:addDays(2),time:'14:00',season:'',place:'서촌 흙놀이터',memo:'앞치마 챙기기! 작품은 3주 뒤에 찾으러 가면 돼.',by:'me'},
-    {id:'s6',title:'춘천 닭갈비 당일치기',cat:'trip',date:addDays(5),time:'09:00',season:'',place:'청량리역 ITX 매표소 앞',memo:'아침은 기차에서 김밥 먹자.',by:'partner'},
-    {id:'s7',title:'100일 기념일',cat:'anniv',date:addDays(7),time:'',season:'',place:'연남동',memo:'편지랑 작은 선물 준비하기',by:'me'},
-    {id:'s8',title:'친구들이랑 보드게임',cat:'meet',date:addDays(11),time:'18:30',season:'',place:'홍대 보드게임 카페',memo:'4명 예약 완료',by:'partner'},
-    {id:'s9',title:'단풍 구경 가기',cat:'trip',date:addDays(14),time:'',season:'',place:'내장산',memo:'따뜻하게 입고 가기. 보온병도!',by:'me'},
-    {id:'s10',title:'개봉날 영화 같이 보기',cat:'date',date:addDays(18),time:'20:10',season:'',place:'잠실 롯데시네마',memo:'',by:'partner'},
-    {id:'s11',title:'김장 같이 하기',cat:'meet',date:addDays(23),time:'10:00',season:'',place:'엄마네 집',memo:'장갑이랑 앞치마 챙기기',by:'me'},
-    {id:'s12',title:'생일 서프라이즈 준비',cat:'anniv',date:addDays(28),time:'',season:'',place:'',memo:'케이크는 미리 예약해두기',by:'partner'},
-    {id:'s13',title:'제주도 2박 3일',cat:'trip',date:addDays(35),time:'07:40',season:'',place:'김포공항 국내선',memo:'렌터카 예약했어. 숙소는 애월 쪽!',by:'me'},
-    {id:'s14',title:'크리스마스 마켓 구경',cat:'date',date:addDays(42),time:'17:00',season:'',place:'롯데월드몰',memo:'핫초코 마시기',by:'partner'},
-    {id:'s15',title:'연말 파티',cat:'meet',date:addDays(50),time:'19:00',season:'',place:'우리집',memo:'각자 음식 한 가지씩 가져오기',by:'me'},
-    {id:'s16',title:'온천 여행 가자',cat:'trip',date:'',time:'',season:'겨울',place:'',memo:'어디로 갈지 같이 정해보기',by:'partner'},
-    {id:'s17',title:'벚꽃 보러 가기',cat:'date',date:'',time:'',season:'봄',place:'진해?',memo:'도시락 싸 가자.',by:'me'}
+    {id:'s1',title:'성수동 카페 투어',cat:'date',sub:'food',sub2:'디저트',date:addDays(-3),time:'15:00',season:'',place:'성수동 연무장길',memo:'치즈케이크가 제일 맛있었어. 다음엔 다른 집도!',by:'me'},
+    {id:'s2',title:'첫 영화 보러 가기',cat:'date',sub:'etc',sub2:'영화',date:addDays(-8),time:'19:30',season:'',place:'용산 CGV',memo:'팝콘은 반반으로.',by:'partner'},
+    {id:'s3',title:'한강 피크닉',cat:'date',sub:'walk',sub2:'피크닉',date:addDays(-15),time:'',season:'',place:'뚝섬 한강공원',memo:'돗자리 챙겨오기',by:'me'},
+    {id:'s4',title:'퇴근하고 야식 먹기',cat:'date',sub:'food',sub2:'한식',date:addDays(0),time:'21:00',season:'',place:'우리 동네 포장마차',memo:'오뎅탕이랑 계란말이 시키기',by:'partner'},
+    {id:'s5',title:'도자기 공방 원데이 클래스',cat:'date',sub:'etc',sub2:'공방',date:addDays(2),time:'14:00',season:'',place:'서촌 흙놀이터',memo:'앞치마 챙기기! 작품은 3주 뒤에 찾으러 가면 돼.',by:'me'},
+    {id:'s6',title:'춘천 닭갈비 당일치기',cat:'date',sub:'walk',sub2:'여행',date:addDays(5),time:'09:00',season:'',place:'청량리역 ITX 매표소 앞',memo:'아침은 기차에서 김밥 먹자.',by:'partner'},
+    {id:'s7',title:'100일 기념일',cat:'date',sub:'',sub2:'',date:addDays(7),time:'',season:'',place:'연남동',memo:'편지랑 작은 선물 준비하기',by:'me'},
+    {id:'s8',title:'친구들이랑 보드게임',cat:'personal',sub:'meet',sub2:'',date:addDays(11),time:'18:30',season:'',place:'홍대 보드게임 카페',memo:'4명 예약 완료',by:'partner'},
+    {id:'s9',title:'단풍 구경 가기',cat:'date',sub:'walk',sub2:'여행',date:addDays(14),time:'',season:'',place:'내장산',memo:'따뜻하게 입고 가기. 보온병도!',by:'me'},
+    {id:'s10',title:'개봉날 영화 같이 보기',cat:'date',sub:'etc',sub2:'영화',date:addDays(18),time:'20:10',season:'',place:'잠실 롯데시네마',memo:'',by:'partner'},
+    {id:'s11',title:'김장 같이 하기',cat:'personal',sub:'meet',sub2:'',date:addDays(23),time:'10:00',season:'',place:'엄마네 집',memo:'장갑이랑 앞치마 챙기기',by:'me'},
+    {id:'s12',title:'생일 서프라이즈 준비',cat:'date',sub:'',sub2:'',date:addDays(28),time:'',season:'',place:'',memo:'케이크는 미리 예약해두기',by:'partner'},
+    {id:'s13',title:'제주도 2박 3일',cat:'date',sub:'walk',sub2:'여행',date:addDays(35),time:'07:40',season:'',place:'김포공항 국내선',memo:'렌터카 예약했어. 숙소는 애월 쪽!',by:'me'},
+    {id:'s14',title:'크리스마스 마켓 구경',cat:'date',sub:'etc',sub2:'쇼핑',date:addDays(42),time:'17:00',season:'',place:'롯데월드몰',memo:'핫초코 마시기',by:'partner'},
+    {id:'s15',title:'연말 파티',cat:'personal',sub:'meet',sub2:'',date:addDays(50),time:'19:00',season:'',place:'우리집',memo:'각자 음식 한 가지씩 가져오기',by:'me'},
+    {id:'s16',title:'온천 여행 가자',cat:'date',sub:'walk',sub2:'여행',date:'',time:'',season:'겨울',place:'',memo:'어디로 갈지 같이 정해보기',by:'partner'},
+    {id:'s17',title:'벚꽃 보러 가기',cat:'date',sub:'walk',sub2:'공원',date:'',time:'',season:'봄',place:'진해?',memo:'도시락 싸 가자.',by:'me'}
   ];
 }
+/* 예전 카테고리(여행·기념일·맛집·약속·기타)로 저장된 일정을 새 구조로 옮김 */
+var OLD_CATS={date:['date','',''],trip:['date','walk','여행'],anniv:['date','',''],food:['date','food',''],meet:['personal','meet',''],etc:['date','etc','']};
+function migrate(a){
+  var changed=false;
+  a.forEach(function(e){
+    if('sub' in e) return;
+    var m=OLD_CATS[e.cat]||OLD_CATS.date;
+    e.cat=m[0]; e.sub=m[1]; e.sub2=m[2]; delete e.catLabel; changed=true;
+  });
+  if(changed){ try{ localStorage.setItem(KEY,JSON.stringify(a)); }catch(x){} }
+  return a;
+}
 function load(){
-  try{ var r=localStorage.getItem(KEY); if(r){ var a=JSON.parse(r); if(Array.isArray(a)) return a; } }catch(e){}
+  try{ var r=localStorage.getItem(KEY); if(r){ var a=JSON.parse(r); if(Array.isArray(a)) return migrate(a); } }catch(e){}
   var s=seed(); try{ localStorage.setItem(KEY,JSON.stringify(s)); }catch(e){}
   return s;
 }
@@ -115,6 +140,7 @@ function isUpcoming(e){
 }
 function sortKey(e){
   if(e.date) return e.date+' '+(e.time||'00:00');
+  if(e.season==='언젠가') return '9999-99-99 9';
   var cur=SEASON_ORDER.indexOf(seasonOf(new Date().getMonth()+1));
   return '9999-99-99 '+((SEASON_ORDER.indexOf(e.season)-cur+4)%4);
 }
@@ -132,9 +158,8 @@ function toast(msg){
   clearTimeout(toast._t); toast._t=setTimeout(function(){ t.classList.remove('show'); },2200);
 }
 function badge(e){
-  var c=CATS[e.cat]||CATS.etc;
-  var label=(e.cat==='etc'||!CATS[e.cat])?esc(e.catLabel||'기타'):c.name;
-  return '<span class="badge" style="background:'+c.color+'">'+label+'</span>';
+  var c=catOf(e);
+  return '<span class="badge" style="background:'+c.color+'">'+esc(c.label)+'</span>';
 }
 
 /* ---------- main ---------- */
@@ -143,7 +168,6 @@ function heroHTML(){
   if(!e){
     return '<div class="next empty tape"><p>다가오는 일정이 아직 없어요</p><a class="btn primary" href="#/new">첫 일정 등록하기</a></div>';
   }
-  var c=CATS[e.cat]||CATS.etc;
   var sub='';
   if(e.place) sub+='<p class="s">📍 '+esc(e.place)+'</p>';
   if(e.memo) sub+='<p class="s">✏️ '+esc(e.memo.replace(/\s+/g,' '))+'</p>';
@@ -193,7 +217,9 @@ function renderCalendar(body){
   for(var d=1; d<=dim; d++){
     var ds=y+'-'+pad(m+1)+'-'+pad(d), evs=by[ds]||[], past=ds<t;
     var cls='day'+(ds===t?' today':'')+(ds===state.sel?' sel':'')+(evs.length&&animate?' step':'');
-    var foot=evs.length?'<svg class="'+(past?'off':'on')+'"'+(past?'':' style="--ft-fill:'+(CATS[evs[0].cat]||CATS.etc).color+'"')+' aria-hidden="true"><use href="#foot"/></svg>'+(evs.length>1?'<span class="cnt'+(past?' off':'')+'">'+evs.length+'</span>':''):'';
+    var foot=evs.length?'<span class="hearts">'+evs.slice().sort(function(a,b){ return (a.time||'')<(b.time||'')?-1:1; }).map(function(ev){
+      return '<svg class="'+(past?'off':'on')+'"'+(past?'':' style="--ft-fill:'+catOf(ev).color+'"')+' aria-hidden="true"><use href="#heart"/></svg>';
+    }).join('')+'</span>':'';
     cells+='<button type="button" class="'+cls+'" data-date="'+ds+'" style="--i:'+(evs.length?idx++:0)+'" aria-label="'+(m+1)+'월 '+d+'일'+(evs.length?', 일정 '+evs.length+'개':'')+'"><span class="n">'+d+'</span>'+foot+'</button>';
   }
   var rest=(7-((lead+dim)%7))%7;
@@ -230,7 +256,7 @@ function dayPanel(){
   var head='<h3>'+(d.getMonth()+1)+'월 '+d.getDate()+'일 ('+DOW[d.getDay()]+')</h3>';
   var evs=events.filter(function(e){ return e.date===state.sel; }).sort(function(a,b){ return (a.time||'')<(b.time||'')?-1:1; });
   if(!evs.length){
-    return head+'<p class="hint">이 날은 아직 비어 있어요.</p><p style="margin:10px 0 0"><a class="btn" href="#/new?date='+state.sel+'">이 날에 일정 등록하기</a></p>';
+    return head+'<p class="hint">이 날은 아직 비어 있어요.</p>'+(state.sel<todayStr()?'':'<p style="margin:10px 0 0"><a class="btn" href="#/new?date='+state.sel+'">이 날에 일정 등록하기</a></p>');
   }
   return head+evs.map(function(e){
     return '<a class="mini" href="#/event/'+esc(e.id)+'">'+badge(e)+'<span class="tt">'+esc(e.title)+'</span><span class="tm">'+(e.time?esc(fmtTime(e.time)):'')+'</span></a>';
@@ -249,7 +275,8 @@ function entryHTML(e){
 }
 
 function renderList(body){
-  var items=upcoming();
+  /* 목록은 날짜 미정 일정(이번 계절부터 차례로, 언젠가는 맨 뒤)을 먼저, 그다음 날짜순 */
+  var all=upcoming(), items=all.filter(function(e){ return !e.date; }).concat(all.filter(function(e){ return e.date; }));
   if(!items.length){
     body.innerHTML='<div class="emptybox"><p>다가오는 일정이 없어요</p><a class="btn primary" href="#/new">일정 등록하기</a></div>';
     return;
@@ -292,6 +319,52 @@ function readImage(file,cb){
   fr.readAsDataURL(file);
 }
 
+/* ---------- place info (수정 화면에서 직접 입력) ---------- */
+function emptyPlace(){ return {address:'',open:'',close:'',closed:false,parking:'',fee:'',parkingNote:''}; }
+function toMin(t){ var p=String(t).split(':'); return (+p[0])*60+(+p[1]||0); }
+function placeCardHTML(e){
+  /* 장소명 박스. 링크가 있고 가게 정보를 적어둔 경우에만 위치·영업·주차 버튼을 보여줌 */
+  var link=e.link&&/^https?:\/\//i.test(e.link)?'<p class="pc-link"><span aria-hidden="true">🔗</span><a class="lnk" href="'+esc(e.link)+'" target="_blank" rel="noopener noreferrer">'+esc(e.link.replace(/^https?:\/\//i,''))+'</a></p>':'';
+  var p=e.link?e.placeInfo:null; if(!e.place&&!p&&!link) return ''; p=p||{};
+  var chip=function(t,off){ return '<span class="pc-chip'+(off?' pc-chip-off':'')+'">'+esc(t)+'</span>'; };
+  var panels=[];
+  if(p.address){
+    var tk=p.address.split(/\s+/), region=[tk[0]];
+    for(var i=1;i<tk.length&&region.length<3&&/(시|군|구)$/.test(tk[i]);i++) region.push(tk[i]);
+    panels.push({id:'pcL',cls:'pc-loc',label:'📍 위치',body:'<p class="pc-chips">'+region.map(function(r){ return '<span class="pc-chip pc-chip-loc">'+esc(r)+'</span>'; }).join('')+'</p><p>'+esc(p.address)+'</p>'});
+  }
+  if(p.closed||p.open||p.close){
+    var dayName=e.date?DOW[parse(e.date).getDay()]+'요일':'';
+    var at=e.time||(e.date===todayStr()?nowHM():''), badgeTxt, line;
+    if(p.closed){
+      badgeTxt=chip(at?'영업종료':'휴무',true);
+      line='<b class="pc-off">'+(dayName?dayName+'은':'그날은')+' 쉬는 날이에요</b>';
+    } else if(p.open&&p.close){
+      var o=toMin(p.open), c=toMin(p.close), next=c<=o, t=at?toMin(at):null;
+      if(next) c+=1440;
+      badgeTxt=t===null?chip('영업일'):((t>=o&&t<c)||t+1440<c)?chip('영업중'):chip('영업종료',true);
+      line='<b>'+(dayName?dayName+' ':'')+esc(p.open)+' – <span class="pc-off">'+(next?'다음날 ':'')+esc(p.close)+'</span></b>';
+    } else {
+      badgeTxt='';
+      line='<b>'+(dayName?dayName+' ':'')+(p.open?esc(p.open)+' 오픈':'')+(p.close?(p.open?' ':'')+'<span class="pc-off">'+esc(p.close)+' 마감</span>':'')+'</b>';
+    }
+    panels.push({id:'pcH',cls:'pc-hours',label:'🕒 영업',body:(badgeTxt?'<p class="pc-chips">'+badgeTxt+'</p>':'')+'<p>'+line+'</p>'});
+  }
+  if(p.parking||p.parkingNote){
+    var chips=(p.parking==='yes'?chip('주차 가능'):p.parking==='no'?chip('주차 불가',true):'')+(p.fee==='free'?chip('무료'):p.fee==='paid'?chip('유료'):'');
+    panels.push({id:'pcP',cls:'pc-park',label:'🅿️ 주차',body:(chips?'<p class="pc-chips">'+chips+'</p>':'')+(p.parkingNote?'<p>'+esc(p.parkingNote)+'</p>':'')});
+  }
+  if(!panels.length) return '<section class="pcard" aria-label="장소">'+(e.place?'<h2>'+esc(e.place)+'</h2>':'')+link+'</section>';
+  var first=panels.filter(function(x){ return x.id==='pcH'; })[0]||panels[0];
+  var tabs=panels.length>1?
+    panels.map(function(x){ return '<input type="radio" name="pctab" id="'+x.id+'" class="pc-r"'+(x===first?' checked':'')+'>'; }).join('')+
+    '<div class="pc-tabs">'+panels.map(function(x){ return '<label for="'+x.id+'">'+x.label+'</label>'; }).join('')+'</div>':'';
+  return '<section class="pcard'+(tabs?' has-tabs':'')+'" aria-label="가게 정보">'+
+    '<h2>'+esc(e.place||'가게 정보')+'</h2>'+tabs+
+    '<div class="pc-panels">'+panels.map(function(x){ return '<div class="pc-panel '+x.cls+'">'+(tabs?'':'<span class="pc-lb">'+x.label+'</span>')+x.body+'</div>'; }).join('')+'</div>'+link+
+  '</section>';
+}
+
 /* ---------- detail ---------- */
 function renderDetail(id){
   var fresh=!($('#ov')&&$('#ov').dataset.kind==='detail');
@@ -301,7 +374,7 @@ function renderDetail(id){
     box.innerHTML='<div class="paper note-empty"><p>찾을 수 없는 일정이에요. 이미 삭제됐을 수 있어요.</p><a class="btn primary" href="#/">닫기</a></div>';
     return;
   }
-  var c=CATS[e.cat]||CATS.etc;
+  var c=catOf(e);
   var past=!!e.date&&e.date<todayStr();
   var curImg=(e.image&&/^data:image\//.test(e.image))?e.image:'';
   function photoHTML(){
@@ -328,7 +401,6 @@ function renderDetail(id){
   } else {
     dl='<span class="d">날짜는 아직 미정</span><span class="sticker" style="background:'+SEASON_COLOR[e.season]+'">'+SEASONS[e.season]+' '+e.season+'</span>';
   }
-  var when=e.date?(fmtFull(e.date)+(e.time?' '+fmtTime(e.time):'')):(SEASONS[e.season]+' '+e.season+'에 만나요');
   box.innerHTML=
     '<article class="paper page"><div class="spiral" aria-hidden="true"></div>'+
       '<button type="button" class="round dclose" id="dClose" aria-label="닫기">✕</button>'+
@@ -337,11 +409,9 @@ function renderDetail(id){
       '<div class="lined">'+
         '<div class="rowb">'+badge(e)+'</div>'+
         '<h1 class="ttl">'+esc(e.title)+'</h1>'+
-        '<div class="info"><span class="ic">🗓️</span><span class="tx">'+esc(when)+'</span></div>'+
-        (e.place?'<div class="info"><span class="ic">📍</span><span class="tx">'+esc(e.place)+'</span></div>':'')+
-        (e.link&&/^https?:\/\//i.test(e.link)?'<div class="info"><span class="ic">🔗</span><span class="tx"><a class="lnk" href="'+esc(e.link)+'" target="_blank" rel="noopener noreferrer">'+esc(e.link.replace(/^https?:\/\//i,''))+'</a></span></div>':'')+
         (e.memo?'<div class="info"><span class="ic">✏️</span><span class="tx memo">'+esc(e.memo)+'</span></div>':'')+
       '</div>'+
+      placeCardHTML(e)+
       '<p class="sign">'+withJosa(WHO[e.by||'me'])+' 적었어요</p>'+
       diary+
       (past?'<div class="actions"><button type="button" class="btn primary" id="saveBtn">저장하기</button></div>'
@@ -391,17 +461,27 @@ function renderForm(id,presetDate){
   if(id&&!editing){ renderDetail(id); return; }
   if(editing&&editing.date&&editing.date<todayStr()){ location.hash='#/event/'+editing.id; return; }
   var curSeason=seasonOf(new Date().getMonth()+1);
-  var f=editing?{title:editing.title,cat:editing.cat,mode:editing.date?'date':'season',date:editing.date||'',time:editing.time||'',season:editing.season||curSeason,place:editing.place||'',memo:editing.memo||'',by:editing.by||'me',link:editing.link||'',catLabel:editing.catLabel||''}
-               :{title:'',cat:'date',mode:'date',date:/^\d{4}-\d{2}-\d{2}$/.test(presetDate||'')?presetDate:'',time:'',season:curSeason,place:'',memo:'',by:'me',link:'',catLabel:''};
+  var f=editing?{title:editing.title,cat:CATS[editing.cat]?editing.cat:'date',sub:editing.sub||'',sub2:editing.sub2||'',mode:editing.date?'date':'season',date:editing.date||'',time:editing.time||'',season:editing.season||curSeason,place:editing.place||'',memo:editing.memo||'',by:editing.by||'me',link:editing.link||''}
+               :{title:'',cat:'date',sub:'',sub2:'',mode:'date',date:/^\d{4}-\d{2}-\d{2}$/.test(presetDate||'')&&presetDate>=todayStr()?presetDate:todayStr(),time:nowHM(),season:curSeason,place:'',memo:'',by:'me',link:''};
+  var pi=editing&&editing.placeInfo?JSON.parse(JSON.stringify(editing.placeInfo)):emptyPlace();
   var catChips=Object.keys(CATS).map(function(k){
     var c=CATS[k];
-    var txt=k==='etc'?c.emoji+' <span id="etcTxt">'+esc(f.catLabel||c.name)+'</span>':c.emoji+' '+c.name;
-    var chip='<button type="button" class="chip" data-tone data-cat="'+k+'" style="--tone:'+c.color+'" aria-pressed="'+(f.cat===k)+'">'+txt+'</button>';
-    if(k==='etc') chip+='<input class="in etc-in" id="etcIn" maxlength="8" placeholder="직접 입력" aria-label="기타 일정 종류 직접 입력" autocomplete="off"'+(f.cat==='etc'?'':' hidden')+'>';
-    return chip;
+    return '<button type="button" class="chip" data-tone data-cat="'+k+'" style="--tone:'+c.color+'" aria-pressed="'+(f.cat===k)+'">'+c.emoji+' '+c.name+'</button>';
   }).join('');
-  var seasonChips=SEASON_ORDER.map(function(s){ return '<button type="button" class="chip" data-tone data-season="'+s+'" style="--tone:'+SEASON_COLOR[s]+'" aria-pressed="'+(f.season===s)+'">'+SEASONS[s]+' '+s+'</button>'; }).join('');
+  var seasonChips=SEASON_CHOICES.map(function(s){ return '<button type="button" class="chip" data-tone data-season="'+s+'" style="--tone:'+SEASON_COLOR[s]+'" aria-pressed="'+(f.season===s)+'">'+SEASONS[s]+' '+s+(s==='언젠가'?'!':'')+'</button>'; }).join('');
   var whoChips=Object.keys(WHO).map(function(k){ return '<button type="button" class="chip" data-tone data-by="'+k+'" style="--tone:var(--mint)" aria-pressed="'+(f.by===k)+'">'+WHO[k]+'</button>'; }).join('');
+  var radio=function(attr,val,label,tone,on){ return '<button type="button" class="chip" role="radio" data-tone data-'+attr+'="'+esc(val)+'" style="--tone:'+tone+'" aria-checked="'+on+'">'+esc(label)+'</button>'; };
+  var placeBox=editing?
+    '<div class="fld" id="boxPlace"><span class="lb">가게 정보 <small>(선택)</small></span>'+
+      '<div class="pi"><label class="pi-lb" for="piAddr">📍 주소</label><input class="in" id="piAddr" maxlength="80" placeholder="예) 경기 안산시 단원구 중앙대로 929" autocomplete="off"></div>'+
+      '<div class="pi"><span class="pi-lb" id="lbPiH">🕒 영업</span>'+
+        '<div class="two" id="piTimes"><div><span class="lb pi-sm">여는 시간</span><button type="button" class="in pick" id="piOpen" aria-haspopup="dialog" aria-label="여는 시간 선택"></button></div>'+
+        '<div><span class="lb pi-sm">닫는 시간</span><button type="button" class="in pick" id="piClose" aria-haspopup="dialog" aria-label="닫는 시간 선택"></button></div></div></div>'+
+      '<div class="pi"><span class="pi-lb" id="lbPiP">🅿️ 주차</span>'+
+        '<div class="chips" role="radiogroup" aria-labelledby="lbPiP" id="gPark">'+radio('park','yes','주차 가능','var(--mint)',pi.parking==='yes')+radio('park','no','주차 불가','#FFD7DD',pi.parking==='no')+'</div>'+
+        '<div class="chips" role="radiogroup" aria-label="주차 요금" id="gFee">'+radio('fee','free','무료','var(--mint)',pi.fee==='free')+radio('fee','paid','유료','var(--mint)',pi.fee==='paid')+'</div>'+
+        '<input class="in" id="piPark" maxlength="80" placeholder="예) 건물 지하 주차장, 최초 60분 무료" aria-label="주차 안내" autocomplete="off"></div>'+
+    '</div>':'';
   var back=editing?'#/event/'+editing.id:'#/';
   app.innerHTML=
   '<div class="wrap">'+
@@ -409,8 +489,15 @@ function renderForm(id,presetDate){
     '<div class="paper page"><div class="spiral" aria-hidden="true"></div>'+
       '<h1>'+(editing?'일정 수정':'일정 등록')+'</h1>'+
       '<form id="f" novalidate>'+
-        '<div class="fld"><span class="lb" id="lbCat">어떤 일정이에요?</span><div class="chips" role="group" aria-labelledby="lbCat" id="gCat">'+catChips+'</div></div>'+
-        '<div class="fld"><label for="title">제목</label><input class="in" id="title" maxlength="40" placeholder="예) 도자기 공방 원데이 클래스" autocomplete="off"></div>'+
+        (editing?
+          /* 수정 화면: 카테고리와 제목은 보여주기만 함 */
+          '<div class="fld"><span class="lb">어떤 일정이에요?</span><p class="ro">'+badge(editing)+'</p></div>'+
+          '<div class="fld"><span class="lb">제목</span><p class="in ro-text">'+esc(editing.title)+'</p><p class="sub">카테고리와 제목은 등록한 뒤에는 바꿀 수 없어요.</p></div>'
+        :
+          '<div class="fld"><span class="lb" id="lbCat">어떤 일정이에요?</span><div class="chips" role="group" aria-labelledby="lbCat" id="gCat">'+catChips+'</div>'+
+            '<div class="chips sub-chips" role="radiogroup" aria-label="세부 종류 (선택)" id="gSub"></div>'+
+            '<div class="chips sub-chips" role="radiogroup" id="gSub2"></div></div>'+
+          '<div class="fld"><label for="title">제목</label><input class="in" id="title" maxlength="40" placeholder="예) 도자기 공방 원데이 클래스" autocomplete="off"></div>')+
         '<div class="fld"><span class="lb" id="lbWhen">언제예요?</span>'+
           '<div class="chips" role="group" aria-labelledby="lbWhen" id="gMode">'+
             '<button type="button" class="chip" data-tone data-mode="date" style="--tone:var(--yellow)" aria-pressed="'+(f.mode==='date')+'">날짜를 정했어요</button>'+
@@ -421,23 +508,45 @@ function renderForm(id,presetDate){
         '</div>'+
         '<div class="fld"><label for="place">장소</label><input class="in" id="place" maxlength="60" placeholder="예) 서촌 흙놀이터" autocomplete="off"></div>'+
         '<div class="fld"><label for="link">링크</label><input class="in" id="link" inputmode="url" maxlength="300" placeholder="예) https://example.com" autocomplete="off"></div>'+
+        placeBox+
         '<div class="fld"><label for="memo">메모</label><textarea class="in" id="memo" rows="4" maxlength="300" placeholder="준비물이나 하고 싶은 말을 적어 보세요"></textarea></div>'+
-        '<div class="fld"><span class="lb" id="lbBy">누가 적었어요?</span><div class="chips" role="group" aria-labelledby="lbBy" id="gBy">'+whoChips+'</div></div>'+
+        (editing?'':'<div class="fld"><span class="lb" id="lbBy">누가 적었어요?</span><div class="chips" role="group" aria-labelledby="lbBy" id="gBy">'+whoChips+'</div></div>')+
         '<p class="err" id="err" role="alert"></p>'+
         '<div class="actions"><button type="submit" class="btn primary">'+(editing?'수정 저장':'등록하기')+'</button><a class="btn" href="'+back+'">취소</a></div>'+
       '</form>'+
     '</div>'+
   '</div>';
 
-  $('#title').value=f.title; syncPick(); $('#place').value=f.place; $('#memo').value=f.memo; $('#link').value=f.link; $('#etcIn').value=f.catLabel;
-  function syncCat(){
-    var on=f.cat==='etc'; $('#etcIn').hidden=!on;
-    if(on) $('#etcIn').focus();
+  if(!editing) $('#title').value=f.title;
+  syncPick(); $('#place').value=f.place; $('#memo').value=f.memo; $('#link').value=f.link;
+
+  /* 하위 카테고리: 라디오처럼 하나만 고르고, 고른 것을 다시 누르면 선택 해제 */
+  function drawSubs(){
+    var subs=CATS[f.cat].subs, s=subs[f.sub], opts=s?s.opts:[];
+    $('#gSub').innerHTML=Object.keys(subs).map(function(k){ return radio('sub',k,subs[k].emoji+' '+subs[k].name,subs[k].color,f.sub===k); }).join('');
+    $('#gSub2').hidden=!opts.length;
+    $('#gSub2').setAttribute('aria-label',(s?s.name:'')+' 종류 (선택)');
+    $('#gSub2').innerHTML=opts.map(function(o){ return radio('sub2',o,o,s.color,f.sub2===o); }).join('');
   }
-  $('#etcIn').addEventListener('input',function(){
-    f.catLabel=this.value.trim();
-    $('#etcTxt').textContent=f.catLabel||'기타';
-  });
+  function radioGroup(sel,attr,get,set){
+    $(sel).addEventListener('click',function(ev){
+      var b=ev.target.closest('[data-'+attr+']'); if(!b) return;
+      var v=b.getAttribute('data-'+attr);
+      set(get()===v?'':v);
+      $(sel).querySelectorAll('[data-'+attr+']').forEach(function(x){ x.setAttribute('aria-checked',String(x.getAttribute('data-'+attr)===get())); });
+    });
+  }
+  if(!editing){
+    drawSubs();
+    $('#gSub').addEventListener('click',function(ev){
+      var b=ev.target.closest('[data-sub]'); if(!b) return;
+      var k=b.getAttribute('data-sub');
+      f.sub=f.sub===k?'':k; f.sub2='';
+      drawSubs(); $('#gSub [data-sub="'+k+'"]').focus();
+    });
+    radioGroup('#gSub2','sub2',function(){ return f.sub2; },function(v){ f.sub2=v; });
+  }
+
   function syncMode(){ $('#boxDate').hidden=f.mode!=='date'; $('#boxSeason').hidden=f.mode!=='season'; }
   syncMode();
   function group(sel,attr,key,after){
@@ -449,20 +558,39 @@ function renderForm(id,presetDate){
       });
     });
   }
-  group('#gCat','cat','cat',syncCat); group('#gMode','mode','mode',syncMode); group('#gSeason','season','season'); group('#gBy','by','by');
+  group('#gMode','mode','mode',syncMode); group('#gSeason','season','season');
+  if(!editing){ group('#gCat','cat','cat',function(){ f.sub=''; f.sub2=''; drawSubs(); }); group('#gBy','by','by'); }
 
   function syncPick(){
     $('#dateBtn').innerHTML=(f.date?esc(fmtDate(f.date)):'<span class="ph">날짜 선택</span>')+'<span aria-hidden="true">📅</span>';
     $('#timeBtn').innerHTML=(f.time?esc(fmtTime(f.time)):'<span class="ph">시간 선택</span>')+'<span aria-hidden="true">🕒</span>';
   }
-  $('#dateBtn').addEventListener('click',function(){ pickDate(f.date,this,function(v){ f.date=v; syncPick(); }); });
+  $('#dateBtn').addEventListener('click',function(){ pickDate(f.date,this,function(v){ f.date=v; syncPick(); },todayStr()); });
   $('#timeBtn').addEventListener('click',function(){ pickTime(f.time,this,function(v){ f.time=v; syncPick(); }); });
+
+  /* 가게 정보: 수정 화면에서 링크가 있을 때만 */
+  if(editing){
+    var syncPlaceBox=function(){ $('#boxPlace').hidden=!$('#link').value.trim(); };
+    var syncPi=function(){
+      $('#piOpen').innerHTML=(pi.open?esc(fmtTime(pi.open)):'<span class="ph">시간 선택</span>')+'<span aria-hidden="true">🕒</span>';
+      $('#piClose').innerHTML=(pi.close?esc(fmtTime(pi.close)):'<span class="ph">시간 선택</span>')+'<span aria-hidden="true">🕒</span>';
+      $('#gFee').hidden=pi.parking!=='yes';
+    };
+    $('#piAddr').value=pi.address||''; $('#piPark').value=pi.parkingNote||'';
+    syncPlaceBox(); syncPi();
+    $('#link').addEventListener('input',syncPlaceBox);
+    $('#piOpen').addEventListener('click',function(){ pickTime(pi.open,this,function(v){ pi.open=v; syncPi(); }); });
+    $('#piClose').addEventListener('click',function(){ pickTime(pi.close,this,function(v){ pi.close=v; syncPi(); }); });
+    radioGroup('#gPark','park',function(){ return pi.parking; },function(v){ pi.parking=v; if(v!=='yes') pi.fee=''; syncPi(); });
+    radioGroup('#gFee','fee',function(){ return pi.fee; },function(v){ pi.fee=v; });
+  }
 
   $('#f').addEventListener('submit',function(ev){
     ev.preventDefault();
-    var title=$('#title').value.trim(), date=f.date, time=f.time, err=$('#err');
+    var title=editing?editing.title:$('#title').value.trim(), date=f.date, time=f.time, err=$('#err');
     if(!title){ err.textContent='제목을 입력해 주세요.'; $('#title').focus(); return; }
     if(f.mode==='date'&&!date){ err.textContent='날짜를 선택해 주세요. 아직 정하지 않았다면 "아직 몰라요"를 눌러 주세요.'; $('#dateBtn').focus(); return; }
+    if(f.mode==='date'&&date<todayStr()){ err.textContent='지난 날짜로는 등록할 수 없어요. 오늘이나 이후 날짜를 골라 주세요.'; $('#dateBtn').focus(); return; }
     var link=$('#link').value.trim();
     if(link){
       if(!/^[a-z][a-z0-9+.-]*:/i.test(link)) link='https://'+link;
@@ -470,9 +598,14 @@ function renderForm(id,presetDate){
       try{ var u=new URL(link); okLink=(u.protocol==='http:'||u.protocol==='https:')&&u.hostname.indexOf('.')>0; }catch(x){}
       if(!okLink){ err.textContent='올바른 링크를 입력해 주세요. 예) https://example.com'; $('#link').focus(); return; }
     }
+    var placeInfo=null;
+    if(editing&&link){
+      var p={address:$('#piAddr').value.trim(),open:pi.open,close:pi.close,closed:false,parking:pi.parking,fee:pi.parking==='yes'?pi.fee:'',parkingNote:$('#piPark').value.trim()};
+      if(p.address||p.open||p.close||p.parking||p.parkingNote) placeInfo=p;
+    }
     var obj={
       id:editing?editing.id:'e'+Date.now().toString(36),
-      title:title,cat:f.cat,image:editing&&editing.image?editing.image:'',weather:editing&&editing.weather?editing.weather:'',dayMemo:editing&&editing.dayMemo?editing.dayMemo:'',catLabel:f.cat==='etc'?$('#etcIn').value.trim():'',link:link,
+      title:title,cat:f.cat,sub:f.sub,sub2:f.sub2,image:editing&&editing.image?editing.image:'',weather:editing&&editing.weather?editing.weather:'',dayMemo:editing&&editing.dayMemo?editing.dayMemo:'',link:link,placeInfo:placeInfo,
       date:f.mode==='date'?date:'', time:f.mode==='date'?time:'',
       season:f.mode==='season'?f.season:'',
       place:$('#place').value.trim(), memo:$('#memo').value.trim(), by:f.by
@@ -514,7 +647,7 @@ function detailBox(){
   return ov.querySelector('.dbox');
 }
 
-function pickDate(cur,opener,done){
+function pickDate(cur,opener,done,min){ /* min(YYYY-MM-DD)보다 이른 날은 고를 수 없음 */
   var sh=openModal('날짜 선택',opener);
   var base=cur?parse(cur):new Date(), y=base.getFullYear(), m=base.getMonth(), first=true;
   function draw(){
@@ -522,10 +655,10 @@ function pickDate(cur,opener,done){
     for(i=0;i<lead;i++) cells+='<span></span>';
     for(d=1;d<=dim;d++){
       var ds=y+'-'+pad(m+1)+'-'+pad(d);
-      cells+='<button type="button" class="pd'+(ds===cur?' sel':'')+(ds===t?' today':'')+'" data-d="'+ds+'" aria-label="'+(m+1)+'월 '+d+'일">'+d+'</button>';
+      cells+='<button type="button" class="pd'+(ds===cur?' sel':'')+(ds===t?' today':'')+'" data-d="'+ds+'" aria-label="'+(m+1)+'월 '+d+'일"'+(min&&ds<min?' disabled':'')+'>'+d+'</button>';
     }
     sh.innerHTML=
-      '<div class="cal-head"><button type="button" class="round" data-nav="-1" aria-label="이전 달">‹</button><h2>'+y+'년 '+(m+1)+'월</h2><button type="button" class="round" data-nav="1" aria-label="다음 달">›</button></div>'+
+      '<div class="cal-head"><button type="button" class="round" data-nav="-1" aria-label="이전 달"'+(min&&y+'-'+pad(m+1)<=min.slice(0,7)?' disabled':'')+'>‹</button><h2>'+y+'년 '+(m+1)+'월</h2><button type="button" class="round" data-nav="1" aria-label="다음 달">›</button></div>'+
       '<div class="dow"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>'+
       '<div class="pgrid">'+cells+'</div>'+
       '<div class="actions"><button type="button" class="btn" data-today>오늘 선택</button><button type="button" class="btn" data-close>닫기</button></div>';
@@ -536,7 +669,7 @@ function pickDate(cur,opener,done){
     sh.querySelectorAll('.pd').forEach(function(b){ b.addEventListener('click',function(){ var v=b.dataset.d; closeModal(); done(v); }); });
     sh.querySelector('[data-today]').addEventListener('click',function(){ closeModal(); done(todayStr()); });
     sh.querySelector('[data-close]').addEventListener('click',closeModal);
-    if(first){ first=false; var f0=sh.querySelector('.pd.sel')||sh.querySelector('.pd.today')||sh.querySelector('.pd'); if(f0) f0.focus(); }
+    if(first){ first=false; var f0=sh.querySelector('.pd.sel:not(:disabled)')||sh.querySelector('.pd.today')||sh.querySelector('.pd:not(:disabled)'); if(f0) f0.focus(); }
   }
   draw();
 }
