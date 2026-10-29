@@ -174,7 +174,6 @@ button{font:inherit;color:inherit;cursor:pointer;}
 .fld>label,.fld>.lb{display:block;font-family:var(--f-title);font-size:17px;margin-bottom:6px;}
 .in{width:100%;font:inherit;font-size:21px;padding:6px 4px;background:transparent;color:var(--ink);border:0;border-bottom:2.5px solid var(--ink);border-radius:0;}
 .ro{margin:0;}
-.in.ro-text{margin:0;color:var(--ink-soft);border-bottom-style:dashed;border-bottom-color:var(--line);overflow-wrap:anywhere;}
 .in::placeholder{color:#a8a095;}
 textarea.in{display:block;border:2.5px solid var(--ink);border-radius:var(--wob);padding:10px 12px;line-height:1.5;resize:vertical;background-color:#fff;}
 .chips{display:flex;flex-wrap:wrap;gap:8px;}

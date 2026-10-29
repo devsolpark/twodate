@@ -19,7 +19,7 @@ var CATS = {
     home:{name:'집',emoji:'🏠',color:'#FCE7EF',opts:['OTT','요리']},
     food:{name:'냠',emoji:'🍜',color:'#FCE9D9',opts:['브런치','한식','양식','중식','일식','동남아','디저트']},
     walk:{name:'뚜벅',emoji:'👟',color:'#E2F4E6',opts:['공원','야경','한강','피크닉','캠핑','여행']},
-    study:{name:'공부',emoji:'📚',color:'#E2EDFF',opts:[]},
+    study:{name:'독서',emoji:'📚',color:'#E2EDFF',opts:[]},
     sport:{name:'운동',emoji:'🏃',color:'#EAF2D3',opts:[]},
     etc:{name:'활동',emoji:'✨',color:'#FFF0CC',opts:['전시','영화','쇼핑','스키장','놀이동산','방탈출','공방']}
   }},
@@ -492,9 +492,9 @@ function renderForm(id,presetDate){
       '<h1>'+(editing?'일정 수정':'일정 등록')+'</h1>'+
       '<form id="f" novalidate>'+
         (editing?
-          /* 수정 화면: 카테고리와 제목은 보여주기만 함 */
-          '<div class="fld"><span class="lb">어떤 일정이에요?</span><p class="ro">'+badge(editing)+'</p></div>'+
-          '<div class="fld"><span class="lb">제목</span><p class="in ro-text">'+esc(editing.title)+'</p><p class="sub">카테고리와 제목은 등록한 뒤에는 바꿀 수 없어요.</p></div>'
+          /* 수정 화면: 카테고리는 보여주기만 하고 제목은 고칠 수 있음 */
+          '<div class="fld"><span class="lb">어떤 일정이에요?</span><p class="ro">'+badge(editing)+'</p><p class="sub">카테고리는 등록한 뒤에는 바꿀 수 없어요.</p></div>'+
+          '<div class="fld"><label for="title">제목</label><input class="in" id="title" maxlength="40" autocomplete="off"></div>'
         :
           '<div class="fld"><span class="lb" id="lbCat">어떤 일정이에요?</span><div class="chips" role="group" aria-labelledby="lbCat" id="gCat">'+catChips+'</div>'+
             '<div class="chips sub-chips" role="radiogroup" aria-label="세부 종류 (선택)" id="gSub"></div>'+
@@ -519,7 +519,7 @@ function renderForm(id,presetDate){
     '</div>'+
   '</div>';
 
-  if(!editing) $('#title').value=f.title;
+  $('#title').value=f.title;
   syncPick(); $('#place').value=f.place; $('#memo').value=f.memo; $('#link').value=f.link;
 
   /* 하위 카테고리: 라디오처럼 하나만 고르고, 고른 것을 다시 누르면 선택 해제 */
@@ -589,7 +589,7 @@ function renderForm(id,presetDate){
 
   $('#f').addEventListener('submit',function(ev){
     ev.preventDefault();
-    var title=editing?editing.title:$('#title').value.trim(), date=f.date, time=f.time, err=$('#err');
+    var title=$('#title').value.trim(), date=f.date, time=f.time, err=$('#err');
     if(!title){ err.textContent='제목을 입력해 주세요.'; $('#title').focus(); return; }
     if(f.mode==='date'&&!date){ err.textContent='날짜를 선택해 주세요. 아직 정하지 않았다면 "아직 몰라요"를 눌러 주세요.'; $('#dateBtn').focus(); return; }
     if(f.mode==='date'&&date<todayStr()){ err.textContent='지난 날짜로는 등록할 수 없어요. 오늘이나 이후 날짜를 골라 주세요.'; $('#dateBtn').focus(); return; }
