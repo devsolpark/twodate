@@ -16,26 +16,28 @@ var seasonOf = function(m){ return (m>=3&&m<=5)?'봄':(m>=6&&m<=8)?'여름':(m>=
 /* 카테고리 → 하위 카테고리(subs) → 세부 항목(opts). 하위와 세부는 선택하지 않아도 됨 */
 var CATS = {
   date:{name:'데이트',emoji:'💗',color:'var(--pink)',subs:{
-    home:{name:'휴식',emoji:'🏠',color:'#FCE7EF',opts:['OTT','요리','수다']},
-    food:{name:'냠냠',emoji:'🍜',color:'#FCE9D9',opts:['브런치','한식','양식','중식','일식','동남아','디저트','카페']},
+    home:{name:'휴식',emoji:'🏠',color:'#FCE7EF',opts:['OTT','요리','수다','공부','독서']},
+    food:{name:'냠냠',emoji:'🍜',color:'#FCE9D9',opts:['브런치','한식','양식','중식','일식','동남아','카페']},
     walk:{name:'뚜벅',emoji:'👟',color:'#E2F4E6',opts:['공원','야경','한강','피크닉','캠핑','여행','힐링','산책']},
-    study:{name:'집중',emoji:'📚',color:'#E2EDFF',opts:['독서','공부','과제','생산']},
-    etc:{name:'활동',emoji:'✨',color:'#FFF0CC',opts:['전시','영화','쇼핑','스키장','놀이동산','방탈출','공방','운동']},
+    etc:{name:'활동',emoji:'✨',color:'#FFF0CC',opts:['전시','영화','쇼핑','스키장','운동']},
     anniv:{name:'특별데이',emoji:'🎉',color:'#F3E6FA',opts:[]}
   }},
-  personal:{name:'개인',emoji:'🗂️',color:'var(--lav)',subs:{
+  /* 각자의 일정. 달력에는 하트 대신 카테고리 이모지(🦫·🐰)로 보임 */
+  personal:{name:'호',emoji:'🦫',color:'var(--lav)',person:true,subs:{
     work:{name:'업무',emoji:'💼',color:'#ECE6FA',opts:[]},
     leave:{name:'연차',emoji:'🌴',color:'#FFF4D6',opts:[]},
     meet2:{name:'일정',emoji:'👨',color:'#DCEBFA',opts:[]},
-    dinner:{name:'회식',emoji:'🍻',color:'#FDE4D6',opts:[]},
-    study:{name:'공부',emoji:'✏️',color:'#E8F1FB',opts:[]},
-    meet:{name:'일정',emoji:'👩',color:'#DDF3EC',opts:[]}
+    dinner:{name:'회식',emoji:'🍻',color:'#FDE4D6',opts:[]}
+  }},
+  sol:{name:'솔',emoji:'🐰',color:'#FFD9E3',person:true,subs:{
+    meet:{name:'일정',emoji:'👩',color:'#DDF3EC',opts:[]},
+    study:{name:'공부',emoji:'✏️',color:'#E8F1FB',opts:[]}
   }}
-};
-function catOf(e){
+};function catOf(e){
   var c=CATS[e.cat]||CATS.date, s=e.sub&&c.subs[e.sub];
-  var name=s?(e.cat==='personal'?s.emoji+' ':'')+s.name:c.name;   /* 개인은 '일정'이 둘이라 뱃지에도 이모지를 붙여 구분 */
-  return {emoji:(s||c).emoji,color:(s||c).color,label:s?name+(e.sub2?' · '+e.sub2:''):c.name};
+  /* 호·솔 일정은 뱃지에 이모지를 붙여 구분 (하위가 없으면 🦫 호 / 🐰 솔) */
+  if(c.person) return {emoji:c.emoji,color:(s||c).color,label:s?s.emoji+' '+s.name:c.emoji+' '+c.name};
+  return {emoji:(s||c).emoji,color:(s||c).color,label:s?s.name+(e.sub2?' · '+e.sub2:''):c.name};
 }
 var SEASONS = {'봄':'🌸','여름':'🌊','가을':'🍂','겨울':'⛄','언젠가':'✨'};
 var SEASON_COLOR = {'봄':'var(--pink)','여름':'var(--sky)','가을':'var(--orange)','겨울':'var(--lav)','언젠가':'var(--yellow)'};
@@ -102,14 +104,14 @@ function seed(){
     {id:'s5',title:'도자기 공방 원데이 클래스',cat:'date',sub:'etc',sub2:'공방',date:addDays(2),time:'14:00',season:'',place:'서촌 흙놀이터',memo:'앞치마 챙기기! 작품은 3주 뒤에 찾으러 가면 돼.',by:'me'},
     {id:'s6',title:'춘천 닭갈비 당일치기',cat:'date',sub:'walk',sub2:'여행',date:addDays(5),time:'09:00',season:'',place:'청량리역 ITX 매표소 앞',memo:'아침은 기차에서 김밥 먹자.',by:'partner'},
     {id:'s7',title:'100일 기념일',cat:'date',sub:'',sub2:'',date:addDays(7),time:'',season:'',place:'연남동',memo:'편지랑 작은 선물 준비하기',by:'me'},
-    {id:'s8',title:'친구들이랑 보드게임',cat:'personal',sub:'meet',sub2:'',date:addDays(11),time:'18:30',season:'',place:'홍대 보드게임 카페',memo:'4명 예약 완료',by:'partner'},
+    {id:'s8',title:'친구들이랑 보드게임',cat:'sol',sub:'meet',sub2:'',date:addDays(11),time:'18:30',season:'',place:'홍대 보드게임 카페',memo:'4명 예약 완료',by:'partner'},
     {id:'s9',title:'단풍 구경 가기',cat:'date',sub:'walk',sub2:'여행',date:addDays(14),time:'',season:'',place:'내장산',memo:'따뜻하게 입고 가기. 보온병도!',by:'me'},
     {id:'s10',title:'개봉날 영화 같이 보기',cat:'date',sub:'etc',sub2:'영화',date:addDays(18),time:'20:10',season:'',place:'잠실 롯데시네마',memo:'',by:'partner'},
-    {id:'s11',title:'김장 같이 하기',cat:'personal',sub:'meet',sub2:'',date:addDays(23),time:'10:00',season:'',place:'엄마네 집',memo:'장갑이랑 앞치마 챙기기',by:'me'},
+    {id:'s11',title:'김장 같이 하기',cat:'sol',sub:'meet',sub2:'',date:addDays(23),time:'10:00',season:'',place:'엄마네 집',memo:'장갑이랑 앞치마 챙기기',by:'me'},
     {id:'s12',title:'생일 서프라이즈 준비',cat:'date',sub:'',sub2:'',date:addDays(28),time:'',season:'',place:'',memo:'케이크는 미리 예약해두기',by:'partner'},
     {id:'s13',title:'제주도 2박 3일',cat:'date',sub:'walk',sub2:'여행',date:addDays(35),time:'07:40',season:'',place:'김포공항 국내선',memo:'렌터카 예약했어. 숙소는 애월 쪽!',by:'me'},
     {id:'s14',title:'크리스마스 마켓 구경',cat:'date',sub:'etc',sub2:'쇼핑',date:addDays(42),time:'17:00',season:'',place:'롯데월드몰',memo:'핫초코 마시기',by:'partner'},
-    {id:'s15',title:'연말 파티',cat:'personal',sub:'meet',sub2:'',date:addDays(50),time:'19:00',season:'',place:'우리집',memo:'각자 음식 한 가지씩 가져오기',by:'me'},
+    {id:'s15',title:'연말 파티',cat:'sol',sub:'meet',sub2:'',date:addDays(50),time:'19:00',season:'',place:'우리집',memo:'각자 음식 한 가지씩 가져오기',by:'me'},
     {id:'s16',title:'온천 여행 가자',cat:'date',sub:'walk',sub2:'여행',date:'',time:'',season:'겨울',place:'',memo:'어디로 갈지 같이 정해보기',by:'partner'},
     {id:'s17',title:'벚꽃 보러 가기',cat:'date',sub:'walk',sub2:'공원',date:'',time:'',season:'봄',place:'진해?',memo:'도시락 싸 가자.',by:'me'}
   ];
@@ -127,6 +129,10 @@ function migrate(a){
     if(e.cat==='date'&&e.sub==='sport'){ e.sub='etc'; e.sub2='운동'; changed=true; }
     /* 개인 '출장'·'경호'가 '업무' 하나로 합쳐짐 */
     if(e.cat==='personal'&&e.sub==='guard'){ e.sub='work'; changed=true; }
+    /* 데이트 '집중'이 없어지면서 독서·공부는 휴식 아래로, 나머지는 휴식으로 */
+    if(e.cat==='date'&&e.sub==='study'){ e.sub='home'; if(e.sub2!=='독서'&&e.sub2!=='공부') e.sub2=''; changed=true; }
+    /* 개인이 호·솔로 나뉘면서 👩 일정과 공부는 솔로 */
+    if(e.cat==='personal'&&(e.sub==='meet'||e.sub==='study')){ e.cat='sol'; changed=true; }
   });
   if(changed){ try{ localStorage.setItem(KEY,JSON.stringify(a)); }catch(x){} }
   return a;
@@ -229,7 +235,7 @@ function renderCalendar(body){
     var cls='day'+(ds===t?' today':'')+(ds===state.sel?' sel':'')+(evs.length&&animate?' step':'');
     var foot=evs.length?'<span class="hearts" aria-hidden="true">'+evs.slice().sort(function(a,b){ return (a.time||'')<(b.time||'')?-1:1; }).map(function(ev){
       var c=catOf(ev), cls='cal-ic'+(past?' past':'');
-      if(ev.cat==='personal') return '<span class="'+cls+' emo">'+c.emoji+'</span>';
+      if((CATS[ev.cat]||{}).person) return '<span class="'+cls+' emo">'+c.emoji+'</span>';
       return '<span class="'+cls+'"><svg style="--ft-fill:'+c.color+'"><use href="#heart"/></svg></span>';
     }).join('')+'</span>':'';
     cells+='<button type="button" class="'+cls+'" data-date="'+ds+'" style="--i:'+(evs.length?idx++:0)+'" aria-label="'+(m+1)+'월 '+d+'일'+(evs.length?', 일정 '+evs.length+'개':'')+'"><span class="n">'+d+'</span>'+foot+'</button>';
