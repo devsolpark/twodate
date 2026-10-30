@@ -16,12 +16,12 @@ var seasonOf = function(m){ return (m>=3&&m<=5)?'봄':(m>=6&&m<=8)?'여름':(m>=
 /* 카테고리 → 하위 카테고리(subs) → 세부 항목(opts). 하위와 세부는 선택하지 않아도 됨 */
 var CATS = {
   date:{name:'데이트',emoji:'💗',color:'var(--pink)',subs:{
-    home:{name:'실내',emoji:'🏠',color:'#FCE7EF',opts:['OTT','요리','수다']},
-    food:{name:'냠',emoji:'🍜',color:'#FCE9D9',opts:['브런치','한식','양식','중식','일식','동남아','디저트','카페']},
+    home:{name:'휴식',emoji:'🏠',color:'#FCE7EF',opts:['OTT','요리','수다']},
+    food:{name:'냠냠',emoji:'🍜',color:'#FCE9D9',opts:['브런치','한식','양식','중식','일식','동남아','디저트','카페']},
     walk:{name:'뚜벅',emoji:'👟',color:'#E2F4E6',opts:['공원','야경','한강','피크닉','캠핑','여행','힐링','산책']},
     study:{name:'집중',emoji:'📚',color:'#E2EDFF',opts:['독서','공부','과제','생산']},
-    anniv:{name:'기념',emoji:'🎉',color:'#F3E6FA',opts:[]},
-    etc:{name:'활동',emoji:'✨',color:'#FFF0CC',opts:['전시','영화','쇼핑','스키장','놀이동산','방탈출','공방','운동']}
+    etc:{name:'활동',emoji:'✨',color:'#FFF0CC',opts:['전시','영화','쇼핑','스키장','놀이동산','방탈출','공방','운동']},
+    anniv:{name:'특별데이',emoji:'🎉',color:'#F3E6FA',opts:[]}
   }},
   personal:{name:'개인',emoji:'🗂️',color:'var(--lav)',subs:{
     work:{name:'업무',emoji:'💼',color:'#ECE6FA',opts:[]},
