@@ -75,7 +75,7 @@ button{font:inherit;color:inherit;cursor:pointer;}
 .day .cal-ic svg{display:block;width:17px;height:16px;overflow:visible;--ft-stroke:var(--ink);}
 .day .cal-ic.emo{transform:none;font-size:14px;line-height:16px;text-align:center;}
 .day .cal-ic+.cal-ic.emo,.day .cal-ic.emo+.cal-ic{margin-left:-2px;} /* 이모지는 하트보다 덜 겹치게 */
-.day .cal-ic.past{opacity:.8;} /* 지난 일정: 색은 그대로, 80% 불투명 */
+.day .cal-ic.past{opacity:.2;} /* 지난 일정: 색은 그대로, 20%만 보이게 */
 .step .cal-ic>*{display:block;animation:step .5s both;animation-delay:calc(var(--i)*70ms);}
 @keyframes step{from{opacity:0;transform:translateY(8px) scale(.7);}to{opacity:1;transform:none;}}
 .daypanel{margin-top:16px;padding-top:14px;border-top:2px dashed var(--ink-soft);}

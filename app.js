@@ -24,17 +24,18 @@ var CATS = {
     etc:{name:'활동',emoji:'✨',color:'#FFF0CC',opts:['전시','영화','쇼핑','스키장','놀이동산','방탈출','공방','운동']}
   }},
   personal:{name:'개인',emoji:'🗂️',color:'var(--lav)',subs:{
-    work:{name:'출장',emoji:'🧳',color:'#ECE6FA',opts:[]},
-    meet:{name:'일정',emoji:'📌',color:'#DDF3EC',opts:[]},
+    work:{name:'업무',emoji:'💼',color:'#ECE6FA',opts:[]},
+    meet:{name:'일정',emoji:'👩',color:'#DDF3EC',opts:[]},
+    meet2:{name:'일정',emoji:'👨',color:'#DCEBFA',opts:[]},
     dinner:{name:'회식',emoji:'🍻',color:'#FDE4D6',opts:[]},
-    guard:{name:'경호',emoji:'🛡️',color:'#E4E8EE',opts:[]},
     study:{name:'공부',emoji:'✏️',color:'#E8F1FB',opts:[]},
     leave:{name:'연차',emoji:'🌴',color:'#FFF4D6',opts:[]}
   }}
 };
 function catOf(e){
   var c=CATS[e.cat]||CATS.date, s=e.sub&&c.subs[e.sub];
-  return {emoji:(s||c).emoji,color:(s||c).color,label:s?s.name+(e.sub2?' · '+e.sub2:''):c.name};
+  var name=s?(e.cat==='personal'?s.emoji+' ':'')+s.name:c.name;   /* 개인은 '일정'이 둘이라 뱃지에도 이모지를 붙여 구분 */
+  return {emoji:(s||c).emoji,color:(s||c).color,label:s?name+(e.sub2?' · '+e.sub2:''):c.name};
 }
 var SEASONS = {'봄':'🌸','여름':'🌊','가을':'🍂','겨울':'⛄','언젠가':'✨'};
 var SEASON_COLOR = {'봄':'var(--pink)','여름':'var(--sky)','가을':'var(--orange)','겨울':'var(--lav)','언젠가':'var(--yellow)'};
@@ -124,6 +125,8 @@ function migrate(a){
     }
     /* 데이트 '운동'이 '기념'으로 바뀌면서, 예전 운동 일정은 활동 › 운동으로 옮김 */
     if(e.cat==='date'&&e.sub==='sport'){ e.sub='etc'; e.sub2='운동'; changed=true; }
+    /* 개인 '출장'·'경호'가 '업무' 하나로 합쳐짐 */
+    if(e.cat==='personal'&&e.sub==='guard'){ e.sub='work'; changed=true; }
   });
   if(changed){ try{ localStorage.setItem(KEY,JSON.stringify(a)); }catch(x){} }
   return a;
