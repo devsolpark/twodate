@@ -25,11 +25,11 @@ var CATS = {
   }},
   personal:{name:'개인',emoji:'🗂️',color:'var(--lav)',subs:{
     work:{name:'업무',emoji:'💼',color:'#ECE6FA',opts:[]},
-    meet:{name:'일정',emoji:'👩',color:'#DDF3EC',opts:[]},
+    leave:{name:'연차',emoji:'🌴',color:'#FFF4D6',opts:[]},
     meet2:{name:'일정',emoji:'👨',color:'#DCEBFA',opts:[]},
     dinner:{name:'회식',emoji:'🍻',color:'#FDE4D6',opts:[]},
     study:{name:'공부',emoji:'✏️',color:'#E8F1FB',opts:[]},
-    leave:{name:'연차',emoji:'🌴',color:'#FFF4D6',opts:[]}
+    meet:{name:'일정',emoji:'👩',color:'#DDF3EC',opts:[]}
   }}
 };
 function catOf(e){
