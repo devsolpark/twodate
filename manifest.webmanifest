@@ -1,6 +1,6 @@
 {
-  "name": "우리 그림일기",
-  "short_name": "그림일기",
+  "name": "투데이트",
+  "short_name": "투데이트",
   "description": "둘이 함께 쓰는 커플 일정 그림일기",
   "lang": "ko",
   "start_url": "./",
