@@ -70,12 +70,14 @@ button{font:inherit;color:inherit;cursor:pointer;}
 .day.today .n{background:var(--pink);border:2px solid var(--ink);}
 .day.sel{outline:3px dashed var(--ink);outline-offset:-4px;border-radius:6px;}
 .day .hearts{position:absolute;left:3px;right:3px;bottom:5px;display:flex;flex-wrap:wrap-reverse;justify-content:flex-end;}
-.day svg{flex:none;width:17px;height:16px;transform:rotate(-14deg);overflow:visible;}
-.day svg+svg{margin-left:-6px;}
-.day svg.on{--ft-stroke:var(--ink);}
-.day svg.off{--ft-fill:#E9E6E0;--ft-stroke:#D3CFC8;--ft-hi:transparent;}
-.step svg{animation:step .5s both;animation-delay:calc(var(--i)*70ms);}
-@keyframes step{from{opacity:0;transform:translateY(8px) rotate(-14deg) scale(.7);}to{opacity:1;transform:rotate(-14deg);}}
+.day .cal-ic{flex:none;display:block;width:17px;height:16px;transform:rotate(-14deg);}
+.day .cal-ic+.cal-ic{margin-left:-6px;}
+.day .cal-ic svg{display:block;width:17px;height:16px;overflow:visible;--ft-stroke:var(--ink);}
+.day .cal-ic.emo{transform:none;font-size:14px;line-height:16px;text-align:center;}
+.day .cal-ic+.cal-ic.emo,.day .cal-ic.emo+.cal-ic{margin-left:-2px;} /* 이모지는 하트보다 덜 겹치게 */
+.day .cal-ic.past{opacity:.8;} /* 지난 일정: 색은 그대로, 80% 불투명 */
+.step .cal-ic>*{display:block;animation:step .5s both;animation-delay:calc(var(--i)*70ms);}
+@keyframes step{from{opacity:0;transform:translateY(8px) scale(.7);}to{opacity:1;transform:none;}}
 .daypanel{margin-top:16px;padding-top:14px;border-top:2px dashed var(--ink-soft);}
 .daypanel h3{margin:0 0 6px;font-family:var(--f-title);font-weight:400;font-size:19px;}
 .daypanel .hint{margin:0;color:var(--ink-soft);}

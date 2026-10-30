@@ -16,17 +16,20 @@ var seasonOf = function(m){ return (m>=3&&m<=5)?'봄':(m>=6&&m<=8)?'여름':(m>=
 /* 카테고리 → 하위 카테고리(subs) → 세부 항목(opts). 하위와 세부는 선택하지 않아도 됨 */
 var CATS = {
   date:{name:'데이트',emoji:'💗',color:'var(--pink)',subs:{
-    home:{name:'집',emoji:'🏠',color:'#FCE7EF',opts:['OTT','요리']},
-    food:{name:'냠',emoji:'🍜',color:'#FCE9D9',opts:['브런치','한식','양식','중식','일식','동남아','디저트']},
-    walk:{name:'뚜벅',emoji:'👟',color:'#E2F4E6',opts:['공원','야경','한강','피크닉','캠핑','여행']},
-    study:{name:'독서',emoji:'📚',color:'#E2EDFF',opts:[]},
-    sport:{name:'운동',emoji:'🏃',color:'#EAF2D3',opts:[]},
-    etc:{name:'활동',emoji:'✨',color:'#FFF0CC',opts:['전시','영화','쇼핑','스키장','놀이동산','방탈출','공방']}
+    home:{name:'실내',emoji:'🏠',color:'#FCE7EF',opts:['OTT','요리','수다']},
+    food:{name:'냠',emoji:'🍜',color:'#FCE9D9',opts:['브런치','한식','양식','중식','일식','동남아','디저트','카페']},
+    walk:{name:'뚜벅',emoji:'👟',color:'#E2F4E6',opts:['공원','야경','한강','피크닉','캠핑','여행','힐링','산책']},
+    study:{name:'집중',emoji:'📚',color:'#E2EDFF',opts:['독서','공부','과제','생산']},
+    anniv:{name:'기념',emoji:'🎉',color:'#F3E6FA',opts:[]},
+    etc:{name:'활동',emoji:'✨',color:'#FFF0CC',opts:['전시','영화','쇼핑','스키장','놀이동산','방탈출','공방','운동']}
   }},
   personal:{name:'개인',emoji:'🗂️',color:'var(--lav)',subs:{
     work:{name:'출장',emoji:'🧳',color:'#ECE6FA',opts:[]},
-    meet:{name:'약속',emoji:'🤝',color:'#DDF3EC',opts:[]},
-    dinner:{name:'회식',emoji:'🍻',color:'#FDE4D6',opts:[]}
+    meet:{name:'일정',emoji:'📌',color:'#DDF3EC',opts:[]},
+    dinner:{name:'회식',emoji:'🍻',color:'#FDE4D6',opts:[]},
+    guard:{name:'경호',emoji:'🛡️',color:'#E4E8EE',opts:[]},
+    study:{name:'공부',emoji:'✏️',color:'#E8F1FB',opts:[]},
+    leave:{name:'연차',emoji:'🌴',color:'#FFF4D6',opts:[]}
   }}
 };
 function catOf(e){
@@ -115,9 +118,12 @@ var OLD_CATS={date:['date','',''],trip:['date','walk','여행'],anniv:['date',''
 function migrate(a){
   var changed=false;
   a.forEach(function(e){
-    if('sub' in e) return;
-    var m=OLD_CATS[e.cat]||OLD_CATS.date;
-    e.cat=m[0]; e.sub=m[1]; e.sub2=m[2]; delete e.catLabel; changed=true;
+    if(!('sub' in e)){
+      var m=OLD_CATS[e.cat]||OLD_CATS.date;
+      e.cat=m[0]; e.sub=m[1]; e.sub2=m[2]; delete e.catLabel; changed=true;
+    }
+    /* 데이트 '운동'이 '기념'으로 바뀌면서, 예전 운동 일정은 활동 › 운동으로 옮김 */
+    if(e.cat==='date'&&e.sub==='sport'){ e.sub='etc'; e.sub2='운동'; changed=true; }
   });
   if(changed){ try{ localStorage.setItem(KEY,JSON.stringify(a)); }catch(x){} }
   return a;
@@ -218,8 +224,10 @@ function renderCalendar(body){
   for(var d=1; d<=dim; d++){
     var ds=y+'-'+pad(m+1)+'-'+pad(d), evs=by[ds]||[], past=ds<t;
     var cls='day'+(ds===t?' today':'')+(ds===state.sel?' sel':'')+(evs.length&&animate?' step':'');
-    var foot=evs.length?'<span class="hearts">'+evs.slice().sort(function(a,b){ return (a.time||'')<(b.time||'')?-1:1; }).map(function(ev){
-      return '<svg class="'+(past?'off':'on')+'"'+(past?'':' style="--ft-fill:'+catOf(ev).color+'"')+' aria-hidden="true"><use href="#heart"/></svg>';
+    var foot=evs.length?'<span class="hearts" aria-hidden="true">'+evs.slice().sort(function(a,b){ return (a.time||'')<(b.time||'')?-1:1; }).map(function(ev){
+      var c=catOf(ev), cls='cal-ic'+(past?' past':'');
+      if(ev.cat==='personal') return '<span class="'+cls+' emo">'+c.emoji+'</span>';
+      return '<span class="'+cls+'"><svg style="--ft-fill:'+c.color+'"><use href="#heart"/></svg></span>';
     }).join('')+'</span>':'';
     cells+='<button type="button" class="'+cls+'" data-date="'+ds+'" style="--i:'+(evs.length?idx++:0)+'" aria-label="'+(m+1)+'월 '+d+'일'+(evs.length?', 일정 '+evs.length+'개':'')+'"><span class="n">'+d+'</span>'+foot+'</button>';
   }
