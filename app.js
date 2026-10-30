@@ -475,7 +475,7 @@ function renderDetail(id){
       placeCardHTML(e)+
       '<p class="sign">'+withJosa(WHO[e.by||'me'])+' 적었어요</p>'+
       diary+
-      (past?'<div class="actions"><button type="button" class="btn primary" id="saveBtn">저장하기</button></div>'
+      (past?'<div class="actions"><button type="button" class="btn primary" id="saveBtn">저장하기</button><a class="btn" href="#/edit/'+esc(e.id)+'">수정하기</a></div>'
            :'<div id="act" class="actions"><a class="btn primary" href="#/edit/'+esc(e.id)+'">수정하기</a><button type="button" class="btn" id="delAsk">삭제하기</button></div>')+
     '</article>';
   $('#dClose').addEventListener('click',function(){ location.hash='#/'; });
@@ -568,7 +568,6 @@ function renderDetail(id){
 function renderForm(id,presetDate){
   var editing=id?events.filter(function(x){ return x.id===id; })[0]:null;
   if(id&&!editing){ renderDetail(id); return; }
-  if(editing&&editing.date&&editing.date<todayStr()){ location.hash='#/event/'+editing.id; return; }
   var curSeason=seasonOf(new Date().getMonth()+1);
   var f=editing?{title:editing.title,cat:CATS[editing.cat]?editing.cat:'date',sub:editing.sub||'',sub2:editing.sub2||'',mode:editing.date?'date':'season',date:editing.date||'',time:editing.time||'',season:editing.season||curSeason,place:editing.place||'',memo:editing.memo||'',by:editing.by||'me',link:editing.link||''}
                :{title:'',cat:'date',sub:'',sub2:'',mode:'date',date:/^\d{4}-\d{2}-\d{2}$/.test(presetDate||'')?presetDate:todayStr(),time:nowHM(),season:curSeason,place:'',memo:'',by:'me',link:''};
